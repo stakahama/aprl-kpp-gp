@@ -12,7 +12,7 @@ module {ROOT}_GlobalAER
 
 ! variables initialized by {ROOT}_Initialize.f90
   integer :: keyboard_input             !FB: command-line-argument or keyboard input defining the number of the input file in the folder in_outputs
-  character(len=7):: input_file         !FB: name of the input file in the folder in_outputs
+  character(len=7):: runpath         !FB: name of the input file in the folder in_outputs
   character(len=8) :: integrator        !FB: integrator type 'forward' or 'backward', global variable to be able to read it from a file when initializing
   integer :: partition_substeps
   real(kind=dp) :: cAER0_total !FB: initial total amount of aerosol present (default: 313E11 (NSPEC*E11), can be overwritten by input textfile)

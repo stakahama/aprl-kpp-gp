@@ -6,3 +6,8 @@ Editing to ensure double precision
 - ROOT_InitializeAER.f90
 - ROOT_PartitionAER.f90 (this was okay)
 
+Also changed input_file (len=7) to runpath (len=6)
+- outputs were in_outputs/input{dd}
+- now in run_{dd}/
+
+default was input_file="std-def," now runpath="run_def"

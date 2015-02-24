@@ -23,12 +23,12 @@ class MainDriver:
         self.init_modification = '''if (keyboard_input == -1) then
 ! FB decide whether to ovwerwrite initialization with data from external file
 print*,"Do you want to overwrite simulation parameters with data from an external file?"
-print*,"  - enter 999 to keep simulation parameters from ROOT.def and input_template_.txt"
-print*,"  - or enter number of input file (max 2 digits, inputXX.txt) to overwrite definition from ROOT.def"
+print*,"  - enter 999 to keep simulation parameters from ROOT.def and run_def/input.txt"
+print*,"  - or enter number of runpath (max 2 digits, run_DD.txt) to overwrite definition from ROOT.def"
 read (*,*) keyboard_input
 end if
 
-! define input_XX.txt formats
+! define input.txt formats
 110 format (f9.0)
 111 format (i9)
 112 format (a8)
@@ -36,10 +36,10 @@ end if
 
 select case (keyboard_input)
   case(999)
-    write(*,*) "using parameters from ROOT.def and input_template_.txt"
-    open (unit=15, file="in_outputs/input_template_.txt", status='old',    &
+    write(*,*) "using parameters from ROOT.def and run_def/input.txt"
+    open (unit=15, file="run_def/input.txt", status='old',    &
                  access='sequential', form='formatted', action='read' )
-      ! read in defaults defined in input_template_.txt
+      ! read in defaults defined in input.txt
         read (15, *)            ! skip first four lines
         read (15, *)  
         read (15, *)  
@@ -48,15 +48,15 @@ select case (keyboard_input)
         read (15, 112)  integrator
         read (15, 113)  cAER0_total
 
-    input_file = "std-def"
-    write(*,*) "read from file: ","input_template.txt", ", write output to: ", input_file
+    runpath = "run_def"
+    write(*,*) "read from file: ", runpath//"/input.txt", ", write output to: ", runpath
     write(*,*) "using: TSTART: ", TSTART, "TEND: ", TEND, "DT: ", DT, &
      "TEMP: ", TEMP, "read in: partition_substeps: ", partition_substeps, "integrator: ", &
      integrator, "total initial CAER [g/m3]", cAER0_total
 
   case DEFAULT ! FB
-    write(input_file,"(A5,I0.2)") "input",keyboard_input
-    open (unit=15, file="in_outputs/"//input_file//".txt", status='old',    &
+    write(runpath,"(A4,I0.3)") "run_",keyboard_input
+    open (unit=15, file=runpath//"/input.txt", status='old',    &
                  access='sequential', form='formatted', action='read' )
         
         read (15, 110)  TSTART
@@ -69,7 +69,7 @@ select case (keyboard_input)
 
     TEND = TSTART + DURATION
 
-    write(*,*) "read from file: ", input_file
+    write(*,*) "read from file: ", runpath
     write(*,*) "read in: TSTART: ", TSTART, "DURATION: ", DURATION, "DT: ", DT, &
      "TEMP: ", TEMP, "partition_substeps: ", partition_substeps, "integrator: ", &
      integrator, "total initial CAER [g/m3]", cAER0_total
@@ -88,7 +88,7 @@ end select
                 for line in finp:
                     fout.write(line)
                     if 'USE' in line and '_Util' in line:
-                        fout.write(addstatementFB('USE {ROOT}_GlobalAER, only: integrator, partition_substeps, keyboard_input, input_file, cAER0_total'.format(ROOT=self.root),2))
+                        fout.write(addstatementFB('USE {ROOT}_GlobalAER, only: integrator, partition_substeps, keyboard_input, runpath, cAER0_total'.format(ROOT=self.root),2))
                         fout.write(addstatementFB('REAL(kind=dp) :: DURATION',2))
                         break
                 ## overwrite INLINED initializations (i.e. leave them in the code but overwrite their result just after)

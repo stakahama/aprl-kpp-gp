@@ -10,7 +10,7 @@ module {ROOT}_InitializeAER
       use {ROOT}_Global, only : TEMP, CFACTOR, CGAS => C, TSTART
       use {ROOT}_GlobalAER, only : CAER, VPAER, organic_selection_binary, Avogadro, molecular_masses, &
            nr_aerosol_particles, d_ve_aerosols, Diff_coeff, NorganicSPEC, cAER0_total, &
-           input_file, &! FB: to output to a file with the same name in the in_outputs-folder
+           runpath, &! FB: to output to a file with the same name in the in_outputs-folder
            Cstar, gamma, f_a_Kn, organic_selection_indices ! FB: variables for DLSODE routine
       use {ROOT}_SIMPOLGroups, only: substruct_count, ngroups
       use simpol_module, only: simpolvp, press2conc
@@ -29,7 +29,7 @@ module {ROOT}_InitializeAER
 
       integer  :: idx
       real(dp) :: molefrac
-      open(55,file='a0.txt', status='old')
+      open(55,file=runpath//'/a0.txt', status='old')
       
       ! body
       ! FIXED PARAMETERS
@@ -93,23 +93,23 @@ module {ROOT}_InitializeAER
       end do
 
       ! open files and overwrite them completely
-      inquire(file="in_outputs/"//input_file//"output_{ROOT}_CGAS.txt", exist=exist)
+      inquire(file=runpath//"output_{ROOT}_CGAS.txt", exist=exist)
       if (exist) then
-         open(86, file="in_outputs/"//input_file//"output_{ROOT}_CGAS.txt", status="old", position="rewind", action="write")
+         open(86, file=runpath//"output_{ROOT}_CGAS.txt", status="old", position="rewind", action="write")
       else
-         open(86, file="in_outputs/"//input_file//"output_{ROOT}_CGAS.txt", status="new", action="write")
+         open(86, file=runpath//"output_{ROOT}_CGAS.txt", status="new", action="write")
       end if
-      inquire(file="in_outputs/"//input_file//"output_{ROOT}_CAER.txt", exist=exist)
+      inquire(file=runpath//"output_{ROOT}_CAER.txt", exist=exist)
       if (exist) then
-         open(87, file="in_outputs/"//input_file//"output_{ROOT}_CAER.txt", status="old", position="rewind", action="write")
+         open(87, file=runpath//"output_{ROOT}_CAER.txt", status="old", position="rewind", action="write")
       else
-         open(87, file="in_outputs/"//input_file//"output_{ROOT}_CAER.txt", status="new", action="write")
+         open(87, file=runpath//"output_{ROOT}_CAER.txt", status="new", action="write")
       end if
-      inquire(file="in_outputs/"//input_file//"ERRORS.txt", exist=exist)
+      inquire(file=runpath//"ERRORS.txt", exist=exist)
       if (exist) then
-         open(88, file="in_outputs/"//input_file//"ERRORS.txt", status="old", position="rewind", action="write")
+         open(88, file=runpath//"ERRORS.txt", status="old", position="rewind", action="write")
       else
-         open(88, file="in_outputs/"//input_file//"ERRORS.txt", status="new", action="write")
+         open(88, file=runpath//"ERRORS.txt", status="new", action="write")
       end if
       write(86, 986) 'TIME', (TRIM(spc_names(i)), i=1,NSPEC)
       write(87,986) 'TIME', (TRIM(spc_names(i)), i=1,NSPEC)
