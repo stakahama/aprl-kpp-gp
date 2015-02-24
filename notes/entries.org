@@ -1,0 +1,8 @@
+
+
+* <2015-02-24 Tue>
+
+Editing to ensure double precision
+- ROOT_InitializeAER.f90
+- ROOT_PartitionAER.f90 (this was okay)
+

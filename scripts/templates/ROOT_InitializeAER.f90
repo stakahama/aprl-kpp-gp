@@ -25,17 +25,21 @@ module {ROOT}_InitializeAER
       real(dp) :: CAER_total_in_g_per_m3, CAER_total_in_molecules_per_cm3, mean_molecular_mass_of_organics !FB: to convert initial amount of aerosl from µg/m3 to molecules/cm3
       real(dp), dimension(NSPEC) :: a0
       real (kind=dp) :: alpha, lambda, Kn
-      real (kind = dp), parameter :: pi = 4 * atan(1.0_dp)
+      real (kind = dp), parameter :: pi = 4_dp * atan(1.0_dp)
 
+      integer  :: idx
+      real(dp) :: molefrac
+      open(55,file='a0.txt', status='old')
+      
       ! body
       ! FIXED PARAMETERS
-      Diff_coeff = 5E-6             ! [m^2/s] diffusion coeff. of organic species in air
-      nr_aerosol_particles = 5E9    ! [m^-3] particle number concentration
-      d_ve_aerosols = 100E-9        ! [m] volume-equivalent diameter of the particles
-      alpha = 1.0
-      lambda = 2e-8 ! [m] mean free path
-      Kn = 2*lambda/d_ve_aerosols
-      f_a_Kn = 0.75*alpha*(1 + Kn)/(Kn*Kn + Kn + 0.283*Kn*alpha + 0.75*alpha)
+      Diff_coeff = 5.d-6             ! [m^2/s] diffusion coeff. of organic species in air
+      nr_aerosol_particles = 5.d9    ! [m^-3] particle number concentration
+      d_ve_aerosols = 100.d-9        ! [m] volume-equivalent diameter of the particles
+      alpha = 1.d0
+      lambda = 2.d-8 ! [m] mean free path
+      Kn = 2.d0*lambda/d_ve_aerosols
+      f_a_Kn = 0.75d0*alpha*(1 + Kn)/(Kn*Kn + Kn + 0.283d0*Kn*alpha + 0.75d0*alpha)
 
       ! VPAER
       do i=1,NSPEC
@@ -54,12 +58,17 @@ module {ROOT}_InitializeAER
 
       ! calculate equilibirum composition (a0) with the respect to the initial gas concentrations
 
-      a0 = 0
-      a0 = CGAS/VPAER         ! element-wise division (as standard in Fortran)
-      where(organic_selection_binary==0) a0 = 0.0 ! set the inorganic fractions to zero
+!!$      a0 = 0
+!!$      a0 = CGAS/VPAER         ! element-wise division (as standard in Fortran)
+!!$      where(organic_selection_binary==0) a0 = 0.0 ! set the inorganic fractions to zero
+!!$
+!!$      a0 = a0/sum(a0)         ! normalize
 
-      a0 = a0/sum(a0)         ! normalize
-
+      a0 = 0.d0
+      do i = 1,NSPEC
+         read(55,*) idx, molefrac
+         a0(idx) = molefrac
+      end do
 
       ! calculate initial CAER defined by the amount of CAER_total_in_g_per_m3     
 
@@ -80,7 +89,7 @@ module {ROOT}_InitializeAER
       allocate(gamma(NorganicSPEC))
       do i=1,NorganicSPEC
          Cstar(i) = VPAER(organic_selection_indices(i))
-         gamma(i) = -2*pi*nr_aerosol_particles*d_ve_aerosols*f_a_Kn*Diff_coeff(organic_selection_indices(i));
+         gamma(i) = -2.d0*pi*nr_aerosol_particles*d_ve_aerosols*f_a_Kn*Diff_coeff(organic_selection_indices(i));
       end do
 
       ! open files and overwrite them completely
