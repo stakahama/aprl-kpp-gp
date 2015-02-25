@@ -6,12 +6,15 @@
 ##
 ################################################################################
 
-import re
 import os
+import sys
+dd = lambda x: os.path.dirname(os.path.dirname(x))
+sys.path.append(os.path.join(dd(__file__),'lib'))
+import re
 from operator import itemgetter
 from collections import OrderedDict
-from simpol import Simpolclass
 import pybel
+from simpol import Simpolclass
 import argparse
 
 parser = argparse.ArgumentParser(description='create a {ROOT}_SIMPOLGroups.f90 containing SIMPOL group abundances for each molecule')
@@ -71,7 +74,7 @@ class kppParameters:
         setattr(self,attr[0],OrderedDict(pairs))
 
     def read_smiles_table(self,smilesfile,attr='smiles',columns=['compound','SMILES','InChI','molwt']):
-        ## to change to molwt: set attr=('molwt',[0,3])
+        import pandas as pd        
         ## smilesfile ('mcm_subset_mass.txt')
         with open(smilesfile) as f:
             ## skip header
@@ -85,7 +88,7 @@ class kppParameters:
             fields = []
             for line in f:
                 if len(line) > 2:
-                    fields.append(map(str.strip,line.strip().split('\t')))
+                    fields.append(map(str.strip,line.strip().split('\t'))) # convert to tuple(?)
         setattr(self,attr,pd.DataFrame(fields,columns=columns).set_index('compound'))
 
     def gen_case(self,groupfn):

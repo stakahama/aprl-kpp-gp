@@ -20,15 +20,34 @@ class MainDriver:
 
     def __init__(self,root):
         self.root = root
-        self.init_modification = '''if (keyboard_input == -1) then
+
+        self.declarations = '''
+  REAL(kind=dp)      :: DURATION             !
+  character(len=100) :: arg_string           ! Command-line arguments as string  
+  integer            :: keyboard_input, narg ! run number
+  character(len=7)   :: runpath              ! run path
+'''
+        
+        self.init_modification = '''
+!~~~> Parse command-line-arguments           ! FB
+!Check if any arguments are found            ! FB
+   narg=command_argument_count()             ! FB
+   if(narg>0)then                            ! FB
+    call get_command_argument(1,arg_string) ! FB: Read in first argument (! Zeroth argument corresponds to program name) ! FB
+    read(arg_string,'(I10)') keyboard_input  ! FB
+  else                                       ! FB
+    keyboard_input = -1  ! FB input_file number will be asked within the program (apinene_Initialize.f90) ! FB
+  end if                                    ! FB ! FB
+  
+  if (keyboard_input == -1) then
   ! FB decide whether to ovwerwrite initialization with data from external file
   print*,"Do you want to overwrite simulation parameters with data from an external file?"
-  print*,"  - enter 999 to keep simulation parameters from ROOT.def and run_def/input.txt"
-  print*,"  - or enter number of runpath (max 2 digits, run_DD.txt) to overwrite definition from ROOT.def"
+  print*,"  - enter 999 to keep simulation parameters from {ROOT}.def and run_def/input.txt"
+  print*,"  - or enter number of runpath (max 2 digits, run_DD.txt) to overwrite definition from {ROOT}.def"
   read (*,*) keyboard_input
   end if
 
-! define input.txt formats
+  ! define input.txt formats
 110 format (f9.0)
 111 format (i9)
 112 format (a8)
@@ -36,23 +55,7 @@ class MainDriver:
 
   select case (keyboard_input)
     case(999)
-      write(*,*) "using parameters from ROOT.def and run_def/input.txt"
-      open (unit=15, file="run_def/input.txt", status='old',    &
-                   access='sequential', form='formatted', action='read' )
-        ! read in defaults defined in input.txt
-          read (15, *)            ! skip first four lines
-          read (15, *)  
-          read (15, *)  
-          read (15, *)  
-          read (15, 111)  partition_substeps
-          read (15, 112)  integrator
-          read (15, 113)  cAER0_total
-
-      runpath = "run_def"
-      write(*,*) "read from file: ", runpath//"/input.txt", ", write output to: ", runpath
-      write(*,*) "using: TSTART: ", TSTART, "TEND: ", TEND, "DT: ", DT, &
-       "TEMP: ", TEMP, "read in: partition_substeps: ", partition_substeps, "integrator: ", &
-       integrator, "total initial CAER [g/m3]", cAER0_total
+      write(*,*) "using default parameters"
 
     case DEFAULT ! FB
       write(runpath,"(A4,I0.3)") "run_",keyboard_input
@@ -63,18 +66,14 @@ class MainDriver:
           read (15, 110)  DURATION
           read (15, 110)  DT
           read (15, 110)  TEMP
-          read (15, 111)  partition_substeps
-          read (15, 112)  integrator
-          read (15, 113)  cAER0_total
 
       TEND = TSTART + DURATION
 
       write(*,*) "read from file: ", runpath
       write(*,*) "read in: TSTART: ", TSTART, "DURATION: ", DURATION, "DT: ", DT, &
-       "TEMP: ", TEMP, "partition_substeps: ", partition_substeps, "integrator: ", &
-       integrator, "total initial CAER [g/m3]", cAER0_total
+       "TEMP: ", TEMP
   end select
-  ! End overwriting initialization FB
+! End overwriting initialization FB
 '''.format(ROOT=self.root)
 
     def modify(self):
@@ -88,14 +87,14 @@ class MainDriver:
                 for line in finp:
                     fout.write(line)
                     if 'USE' in line and '_Util' in line:
-                        fout.write(addstatementFB('USE {ROOT}_GlobalAER, only: integrator, partition_substeps, keyboard_input, runpath, cAER0_total'.format(ROOT=self.root),2))
-                        fout.write(addstatementFB('REAL(kind=dp) :: DURATION',2))
+                        fout.write(self.declarations)                        
+                        fout.write('\n')
                         break
                 ## overwrite INLINED initializations (i.e. leave them in the code but overwrite their result just after)
                 for line in finp:
                     fout.write(line)
                     if 'End INLINED initializations' in line:
-                        fout.write(self.init_modification)
+                        fout.write(self.init_modification)                        
                         fout.write('\n')
         os.rename(newfile,filename)
         print filename+' modified'

@@ -45,4 +45,4 @@ def Readfile(filename):
 
 filename = sys.argv[-1]
 results = Readfile(filename).drop_duplicates()
-results.to_csv(os.path.basename(filename).replace('.dat','_formatted.txt'),index=False)
+results.to_csv(filename.replace('.dat','_formatted.txt'),index=False)

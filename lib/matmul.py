@@ -38,11 +38,9 @@ def matmul(filename1,filename2):
 
         return header, data
     
-    results1 = convertmat(filename1)
-    header1, data1 = results1
+    header1, data1 = convertmat(filename1)
     
-    results2 = convertmat(filename2)
-    header2, data2 = results2
+    header2, data2 = convertmat(filename2)
     
     #print header2
 

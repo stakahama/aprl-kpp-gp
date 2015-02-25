@@ -11,3 +11,10 @@ Also changed input_file (len=7) to runpath (len=6)
 - now in run_{dd}/
 
 default was input_file="std-def," now runpath="run_def"
+
+- created "kpp_edit_initialize_gasphase.py"
+* <2015-02-25 Wed>
+
+extra/process.py renamed to extra/format_output.py. now renames in place (removed os.path.basename call)
+
+

@@ -25,7 +25,7 @@ import numpy as np
 import pybel
 from collections import OrderedDict
 from operator import itemgetter
-from kpp_generate_SIMPOLGroups_extended import kppParameters
+from kpp_generate_SIMPOLGroups import kppParameters
 import argparse
 
 ###_* -------------------- parse arguments --------------------

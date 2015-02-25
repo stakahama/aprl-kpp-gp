@@ -8,9 +8,13 @@
 ##
 ################################################################################
 
+import os
+import sys
+dd = lambda x: os.path.dirname(os.path.dirname(x))
+sys.path.append(os.path.join(dd(__file__),'lib'))
 from collections import OrderedDict                                                      # FB: for OrderedDict
 #from kpp_generate_SIMPOLGroups import kppParameters
-from kpp_generate_SIMPOLGroups_extended import kppParameters
+from kpp_generate_SIMPOLGroups import kppParameters
 from simpol import Simpolclass
 import pandas as pd
 import argparse

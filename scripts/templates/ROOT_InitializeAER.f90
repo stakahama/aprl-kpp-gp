@@ -65,7 +65,7 @@ module {ROOT}_InitializeAER
 !!$      a0 = a0/sum(a0)         ! normalize
 
       a0 = 0.d0
-      do i = 1,NSPEC
+      do i = 1,NorganicSPEC
          read(55,*) idx, molefrac
          a0(idx) = molefrac
       end do
