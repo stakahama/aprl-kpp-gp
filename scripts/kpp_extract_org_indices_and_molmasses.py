@@ -15,7 +15,6 @@ sys.path.append(os.path.join(dd(__file__),'lib'))
 from collections import OrderedDict                                                      # FB: for OrderedDict
 #from kpp_generate_SIMPOLGroups import kppParameters
 from kpp_generate_SIMPOLGroups import kppParameters
-from simpol import Simpolclass
 import pandas as pd
 import argparse
 
@@ -30,7 +29,6 @@ smilesfile = args.SMILESfile
 
 
 ## execute
-simp = Simpolclass()
 # kppParameters.root = root
 parms = kppParameters(root)    
 parms.read_parms() #-> parms.ind

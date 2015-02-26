@@ -37,12 +37,12 @@ for i in "${INPUTS[@]}"; do
     mkdir subset
     mkdir all
     python ${MAINPATH}/outputanalysisFabian_.py ${ROOT} gas ${i} mean ${N_SUBSET}
-    python ${MAINPATH}/outputanalysisFabian_.py ${ROOT} aer ${i} mean ${N_SUBSET}
-    mv ${ROOT}_*_mean_n${N_SUBSET}* mean/
-    python ${MAINPATH}/outputanalysisFabian_.py ${ROOT} gas ${i} subset ${N_SUBSET}
-    python ${MAINPATH}/outputanalysisFabian_.py ${ROOT} aer ${i} subset ${N_SUBSET}
-    mv ${ROOT}_*_subset_n${N_SUBSET}* subset/
-    python ${MAINPATH}/outputanalysisFabian_.py ${ROOT} gas ${i} all 0
-    python ${MAINPATH}/outputanalysisFabian_.py ${ROOT} aer ${i} all 0
-    mv ${ROOT}_*_all_n0* all/
+    # python ${MAINPATH}/outputanalysisFabian_.py ${ROOT} aer ${i} mean ${N_SUBSET}
+    # mv ${ROOT}_*_mean_n${N_SUBSET}* mean/
+    # python ${MAINPATH}/outputanalysisFabian_.py ${ROOT} gas ${i} subset ${N_SUBSET}
+    # python ${MAINPATH}/outputanalysisFabian_.py ${ROOT} aer ${i} subset ${N_SUBSET}
+    # mv ${ROOT}_*_subset_n${N_SUBSET}* subset/
+    # python ${MAINPATH}/outputanalysisFabian_.py ${ROOT} gas ${i} all 0
+    # python ${MAINPATH}/outputanalysisFabian_.py ${ROOT} aer ${i} all 0
+    # mv ${ROOT}_*_all_n0* all/
 done

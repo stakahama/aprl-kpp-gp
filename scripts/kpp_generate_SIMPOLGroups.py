@@ -7,19 +7,21 @@
 ################################################################################
 
 import os
-import sys
-dd = lambda x: os.path.dirname(os.path.dirname(x))
-sys.path.append(os.path.join(dd(__file__),'lib'))
+# import sys
+# dd = lambda x: os.path.dirname(os.path.dirname(x))
+# sys.path.append(os.path.join(dd(__file__),'lib'))
 import re
 from operator import itemgetter
 from collections import OrderedDict
+import numpy as np
+import pandas as pd
 import pybel
-from simpol import Simpolclass
 import argparse
 
 parser = argparse.ArgumentParser(description='create a {ROOT}_SIMPOLGroups.f90 containing SIMPOL group abundances for each molecule')
 parser.add_argument('root',type=str)
 parser.add_argument('SMILESfile',type=str)
+parser.add_argument('SMARTSfile',type=str)
 
 class kppParameters:
     
@@ -121,7 +123,8 @@ class kppParameters:
         for p in self.ind:
             smi = self.smiles[p[1]] if p[1] in self.smiles.keys() else None
             case += indent+'case ({:d}) ! {:s}, {:s}'.format(p[0],p[1],smi)+newline
-            case += format_out(groupfn(smi))+newline
+            # case += format_out(groupfn(smi))+newline
+            case += format_out(groupfn(p[1]))+newline            
         case += indent+'case default'+newline
         case += format_out([0]*31)
         self.select_case = case
@@ -156,15 +159,31 @@ end module {ROOT}_SIMPOLGroups
                                            CASE_STATEMENT=self.select_case))
         print filename+' created'
 
+class SMARTSgetter:
+
+    def __init__(self,filename):
+        self.table = pd.read_csv(filename,index_col='compound')
+
+    def re_index(self,smilesdict):
+        self.table.index = map(smilesdict.get,self.table.index)
+
+    def get_groups(self,compound):
+        if compound in self.table.index:
+            return self.table.ix[compound].values
+        else:
+            return np.array([(1 if p=='zero' else 0) for p in self.table.columns])
+
 if __name__=='__main__':
 
     args = parser.parse_args()
     root = args.root
-    smilesfile = args.SMILESfile
     ## root, smilesfile = ('octane_gen','mcm_subset_mass.txt')
-    simp = Simpolclass()
     parms = kppParameters(root)    
     parms.read_parms()
-    parms.read_smiles(smilesfile)
-    parms.gen_case(simp.get_groups)
+    parms.read_smiles(args.SMILESfile)
+    # parms.smiles = OrderedDict(smarts.table['SMILES'])
+    # smarts.table.drop('SMILES',axis=1,inplace=True)
+    smarts = SMARTSgetter(args.SMARTSfile)
+    # smarts.re_index(parms.smiles)
+    parms.gen_case(smarts.get_groups)
     parms.write_module(path='.')

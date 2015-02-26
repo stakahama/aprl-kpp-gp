@@ -92,15 +92,12 @@ for i in range(0,len(table.species)):
 
 ###############################################
 
-
-
 data1 = {'Species': spec, 'SMILES': smi}
 
 results1 = pd.DataFrame(data1,columns=['Species', 'SMILES'])
 
 with open(root+'_SMILES.txt','w') as r1:
     results1.to_csv(r1,index=True)
-
 
 out = []
 
@@ -182,7 +179,6 @@ orgmass = matmul(keyword_to_save+'edited.txt',keyword_to_save+'molwts.txt')
 orgmassdf = pd.DataFrame(orgmass,index=timeind,
                          columns=['total mass in '+phaseresp+' phase'])
 
-    
 data2 = []
 for i in newhead:
     line = [i]
