@@ -69,4 +69,4 @@ for i in numbers:
                 continue
             dst = os.path.join(runpath,label,f)
             os.rename(f,dst)            
-            subprocess.call('python {path}/extra/format_output.py {filename}'.format(path=args['MAINPATH'],filename=dst), shell=True)
+            subprocess.call('python {path}/postprocess/format_output.py {filename}'.format(path=args['MAINPATH'],filename=dst), shell=True)
