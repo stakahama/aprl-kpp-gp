@@ -141,4 +141,4 @@ if __name__=='__main__':
     simp = SimpolClass()
     simp.read_compounds(args.inputfile)
     out = simp.calc_properties(args.temp)
-    out.to_csv(args.outfile,index=False)
+    out.reset_index().to_csv(args.outfile,index=False)

@@ -25,11 +25,13 @@ import pandas as pd
 
 parser = argparse.ArgumentParser(description='substructure search and vapor pressure calc')
 parser.add_argument('ROOT',type=str)
-parser.add_argument('SEARCHEXE',type=str)
+parser.add_argument('PROGPATH',type=str,default='')
 args = dict(vars(parser.parse_args()))
 
 args['SCRIPTSPATH'] = scriptspath
 args['TMPFILE'] = 'tmp_SMILES.csv'
+args['SEARCHEXE'] = os.path.join(args['PROGPATH'],'substruct_search.py')
+
 
 ###_* -------------------- fragments --------------------
 
@@ -57,4 +59,3 @@ for filename,temp in props.items():
     sch  = {'OUTFILE':filename,'TEMP':temp}
     sch.update(args)
     subprocess.call('python {SCRIPTSPATH}/simpol2.py -i {ROOT}_SIMPOLGroups.csv -o {ROOT}_{OUTFILE} -t {TEMP:.2f}'.format(**sch),shell=True)
-
