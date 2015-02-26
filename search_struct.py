@@ -30,7 +30,7 @@ args = dict(vars(parser.parse_args()))
 
 args['SCRIPTSPATH'] = scriptspath
 args['TMPFILE'] = 'tmp_SMILES.csv'
-args['SEARCHEXE'] = os.path.join(args['PROGPATH'],'substruct_search.py')
+args['SEARCHEXE'] = os.path.join(args['PROGPATH'],'substructure_search.py')
 
 
 ###_* -------------------- fragments --------------------

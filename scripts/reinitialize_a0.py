@@ -16,11 +16,12 @@
 import os
 import subprocess
 from collections import OrderedDict
+import pandas as pd
 import argparse
 
 ###_* -------------------- accept arguments --------------------
 
-parser = argparse.ArgumentParser(description='run kpp for gas-phase and total simulation')
+parser = argparse.ArgumentParser(description='generate a0.txt')
 parser.add_argument('ROOT',type=str)
 parser.add_argument('NUMBERS',type=str)
 args = dict(vars(parser.parse_args()))
@@ -40,4 +41,10 @@ else:
 
 ###_* -------------------- read output --------------------
 
-{'{ROOT}_formatted.csv'
+vp = pd.read_csv('{ROOT}_props_298.csv'.format(**args),index_col='compound')
+
+for i in numbers:
+    runpath = 'run_{:03d}'.format(i)
+    output = pd.read_csv(os.path.join(HERE,runpath,'gas','{ROOT}_formatted.txt'.format(**args)),
+                         index_col='TIME')
+    
