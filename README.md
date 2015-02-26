@@ -9,13 +9,13 @@ Program to modify outputs of KPP to run gas+aerosol simulations. gas-only simula
 Compound-specific information and initial conditions (e.g., "compounds/"):
 
 * apinene_1/
-  * {ROOT}.def
-  * {ROOT}.kpp
-  * mcm\_{ROOT}\_mass.txt (downloaded as mcm\_subset\_mass.txt from MCM web)
+	* {ROOT}.def
+	* {ROOT}.kpp
+	* mcm\_{ROOT}\_mass.txt (downloaded as mcm\_subset\_mass.txt from MCM web)
 * apinene_2/
-  * {ROOT}.def
-  * {ROOT}.kpp
-  * mcm\_{ROOT}\_mass.txt (downloaded as mcm\_subset\_mass.txt from MCM web)
+	* {ROOT}.def
+	* {ROOT}.kpp
+	* mcm\_{ROOT}\_mass.txt (downloaded as mcm\_subset\_mass.txt from MCM web)
 
 
 Simulations (e.g., "simulations/") (here, the name of subfolders should be "run\_" followed by a three-digit integer):
