@@ -1,14 +1,16 @@
 #!/bin/bash
-# EXPLANATIONS:
-# start in a working directory ROOT/, created with the shell_script1_...
-#
-# where root is your MCM compound. Define the same name in this script below:
-# Define also the series of input file numbers, for which you have input files in ../ROOT_template/in_outpus/
-# e.g. INPUTS=('00' '01'); to run simulations with input00.txt and input01.txt
-#
-# CAREFUL THE DATA IN THE INPUT FILES WILL OVERRIDE THE THE ROOT.DEF-FILE. MAKE SURE YOU DO NOT CHANGE IT UNINTENTIONALLY.
-#
-# INPUT PARAMETERS #################################################################
+################################################################################
+## EXPLANATION:
+## $ /path/to/shellscript2.sh {ROOT} {NUMBERS} {N_SUBSET}
+## {NUMBERS} can be a single number or several concatenated by commas.
+## {N_SUBSET} is optional. Default value is 8.
+##
+## EXAMPLES:
+## $ ~/git/projects/kppaermod/shellscript2.sh apinene 1
+## $ ~/git/projects/kppaermod/shellscript2.sh apinene 1,2,
+##
+################################################################################
+# INPUT PARAMETERS
 #define root here:
 ROOT=$1
 NUMBERS=$2
@@ -29,6 +31,7 @@ N_SUBSET=${3:-8} # default value is 8
 
 MAINPATH=`dirname $0`/extra
 
+## runs only in 'total' simulation
 for i in "${INPUTS[@]}"; do
     runpath='run_'${i}
     ln -svf $PWD/mcm_${ROOT}_mass.txt $runpath/total
@@ -37,12 +40,12 @@ for i in "${INPUTS[@]}"; do
     mkdir subset
     mkdir all
     python ${MAINPATH}/outputanalysisFabian_.py ${ROOT} gas ${i} mean ${N_SUBSET}
-    # python ${MAINPATH}/outputanalysisFabian_.py ${ROOT} aer ${i} mean ${N_SUBSET}
-    # mv ${ROOT}_*_mean_n${N_SUBSET}* mean/
-    # python ${MAINPATH}/outputanalysisFabian_.py ${ROOT} gas ${i} subset ${N_SUBSET}
-    # python ${MAINPATH}/outputanalysisFabian_.py ${ROOT} aer ${i} subset ${N_SUBSET}
-    # mv ${ROOT}_*_subset_n${N_SUBSET}* subset/
-    # python ${MAINPATH}/outputanalysisFabian_.py ${ROOT} gas ${i} all 0
-    # python ${MAINPATH}/outputanalysisFabian_.py ${ROOT} aer ${i} all 0
-    # mv ${ROOT}_*_all_n0* all/
+    python ${MAINPATH}/outputanalysisFabian_.py ${ROOT} aer ${i} mean ${N_SUBSET}
+    mv ${ROOT}_*_mean_n${N_SUBSET}* mean/
+    python ${MAINPATH}/outputanalysisFabian_.py ${ROOT} gas ${i} subset ${N_SUBSET}
+    python ${MAINPATH}/outputanalysisFabian_.py ${ROOT} aer ${i} subset ${N_SUBSET}
+    mv ${ROOT}_*_subset_n${N_SUBSET}* subset/
+    python ${MAINPATH}/outputanalysisFabian_.py ${ROOT} gas ${i} all 0
+    python ${MAINPATH}/outputanalysisFabian_.py ${ROOT} aer ${i} all 0
+    mv ${ROOT}_*_all_n0* all/
 done

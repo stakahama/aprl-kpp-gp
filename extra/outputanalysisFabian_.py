@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+Called by shellscript2.sh
+
 Created on Fri Aug 15 12:22:31 2014
 
 @author: shipley

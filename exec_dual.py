@@ -1,9 +1,16 @@
 #!/usr/bin/env python
 
 ################################################################################
+## runs executables
 ##
-## exec_dual.py
+## ~exec_dual.py~
 ##
+## USAGE:
+## $ python /path/to/exec_dual.py {ROOT} {NUMBERS}
+## {NUMBERS} can be a single number or several concatenated by commas.
+##
+## EXAMPLES:
+## $ python ~/git/projects/kppaermod/exec_dual.py apinene 1,2
 ##
 ## satoshi.takahama@epfl.ch
 ##
@@ -46,9 +53,15 @@ else:
 for i in numbers:
     runpath = 'run_{:03d}'.format(i)
     for label,p in paths.items():
+        ## create symlink to inputs
+        if not os.path.exists(os.path.join(HERE,p,runpath)):
+            os.symlink(os.path.join(HERE,runpath),
+                       os.path.join(HERE,p,runpath))
+        ## change directory
         os.chdir(p)
-        print os.getcwd()        
+        ## execute run
         subprocess.call('./{root}.exe {number}'.format(root=args['ROOT'],number=i), shell=True)
+        ## move output and created formatted file
         if not os.path.exists(os.path.join(runpath,label)):
             os.mkdir(os.path.join(runpath,label))
         for f in outputs.values():

@@ -1,4 +1,14 @@
+#!/usr/bin/env python
 
+################################################################################
+##
+## search_struct.py
+##
+## run in directory containing mcm_{ROOT}_mass.txt
+##
+## satoshi.takahama@epfl.ch
+##
+################################################################################
 
 ###_* -------------------- import libraries --------------------
 
@@ -13,7 +23,7 @@ import pandas as pd
 
 ###_* -------------------- accept arguments --------------------
 
-parser = argparse.ArgumentParser(description='build kpp for gas-phase and total simulation')
+parser = argparse.ArgumentParser(description='substructure search and vapor pressure calc')
 parser.add_argument('ROOT',type=str)
 parser.add_argument('SEARCHEXE',type=str)
 args = dict(vars(parser.parse_args()))

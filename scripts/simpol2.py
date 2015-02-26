@@ -1,3 +1,15 @@
+#!/usr/bin/env python
+
+################################################################################
+## Script to calculate group abundances and vapor pressures
+## by SIMPOL.
+##
+## ~simpol2.py~
+##
+## Sep. 2013
+## Satoshi Takahama (satoshi.takahama@epfl.ch)
+################################################################################
+
 from collections import OrderedDict
 import pandas as pd
 import numpy as np
