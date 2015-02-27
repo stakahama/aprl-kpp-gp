@@ -13,13 +13,6 @@
 from collections import OrderedDict
 import pandas as pd
 import numpy as np
-import argparse
-
-parser = argparse.ArgumentParser(description='calculate properties using SIMPOL')
-parser.add_argument('-i','--inputfile',type=str,help='fragment table')
-parser.add_argument('-o','--outfile',type=str,default='properties.csv',help='')
-parser.add_argument('-t','--temp',type=float,default=298.15,help='')
-args = parser.parse_args()
 
 class SimpolClass:
 
@@ -137,6 +130,14 @@ class SimpolClass:
         self.compounds = pd.read_csv(filename).set_index('compound')
 
 if __name__=='__main__':
+
+    import argparse
+
+    parser = argparse.ArgumentParser(description='calculate properties using SIMPOL')
+    parser.add_argument('-i','--inputfile',type=str,help='fragment table')
+    parser.add_argument('-o','--outfile',type=str,default='properties.csv',help='')
+    parser.add_argument('-t','--temp',type=float,default=298.15,help='')
+    args = parser.parse_args()
 
     simp = SimpolClass()
     simp.read_compounds(args.inputfile)

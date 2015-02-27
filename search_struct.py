@@ -48,7 +48,7 @@ os.remove(args['TMPFILE'])
 # full = pd.merge(kpar.smiles['SMILES'].reset_index(),frags,on='compound')
 # full.to_csv('{ROOT}_SIMPOLfrags.csv'.format(**args),index=False)
 
-###_* -------------------- fragments --------------------
+###_* -------------------- properties --------------------
 
 props = {
     'props_298.csv':298.15,

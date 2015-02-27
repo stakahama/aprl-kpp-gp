@@ -1,7 +1,7 @@
 kppaermod
 ===
 
-Program to modify outputs of KPP to run gas+aerosol simulations. gas-only simulation program also modified to receive same inputs as gas+aerosol model.
+Program to modify outputs of KPP to run gas+aerosol simulations. Gas-only simulation program also modified to receive same inputs as gas+aerosol model.
 
 
 ## Directory structure (user inputs)
@@ -37,7 +37,7 @@ Simulations (e.g., "simulations/") (here, the name of subfolders should be "run\
 
 Using the same name for the top level directory (e.g., "apinene\_1") for the compounds and simulation directories may be helpful.
 
-Currently, "apinene\_1", "apinene\_2", etc. should contain runs which vary according to initial gas-phase concentrations and method for deriving photolysis rate constants (technically, the latter can be changed by replacing "photolysis.txt" but currently it is not grouped with input files). After generating the gas and total (gas+aerosol) simulation models ({ROOT}.exe), these parameters can be changed for various simulations ("run\_{DDD}/"):
+Currently, "apinene\_1", "apinene\_2", etc. should contain runs which vary according to initial gas-phase concentrations, temperature and method for deriving photolysis rate constants (technically, the latter can be changed by replacing "photolysis.txt" but currently it is not grouped with input files). This can be changed if desired. This can be modified in kpp\_edit\_initialize.py if desired. After generating the gas and total (gas+aerosol) simulation models ({ROOT}.exe), these parameters can be changed for various simulations ("run\_{DDD}/"):
 
 * The duration and timesteps can be varied in "input.txt".
 * The initial aerosol concentration value ("C<sub>OA</sub>") and integrator (*always "dlsode"*) is also specified in "input.txt".
