@@ -72,7 +72,7 @@ if not (args['skipbuild'] or args['onlygas'] or args['onlytotal']):
 
     deffile = '{ROOT}.def'.format(**args)
     
-    with open(os.path.join(HERE,deffile)) as fout:
+    with open(os.path.join(HERE,deffile),'w') as fout:
         with open(os.path.join(args['MAINPATH'],'scripts','templates','generic.def')) as finp:
             fout.write(finp.read().format(**args))
 
@@ -82,7 +82,7 @@ if not (args['skipbuild'] or args['onlygas'] or args['onlytotal']):
     # runpaths = glob.glob('run_*')
 
     ## compounds
-    compounds = []
+    compoundfiles = [deffile]
     for f in os.listdir(args['CPATH']):
         if f!=deffile:
             compoundfiles.append(f)
@@ -102,6 +102,15 @@ if not (args['skipbuild'] or args['onlygas'] or args['onlytotal']):
     subprocess.call('kpp_edit_kpp.py {ROOT}'.format(**args), shell=True, env=env)
     subprocess.call('kpp {ROOT}.def'.format(**args), shell=True)
     ## ---
+
+    ## test build
+    if '{ROOT}_Parameters.f90'.format(**args) not in os.listdir('.'):
+        sys.exit('KPP build fail')
+
+    ## indices
+    if not os.path.exists(os.path.join(HERE,'compound_indices_table.csv')):
+        subprocess.call('kpp_extract_indices.py {ROOT} mcm_{ROOT}_mass.txt 1'.format(**args), shell=True, env=env)
+        shutil.move('compound_indices_table.csv',HERE)
 
 shutil.copytree(template,paths['gas'],True)
 shutil.copytree(template,paths['total'],True)
@@ -123,7 +132,7 @@ if not args['onlygas']:
     subprocess.call('cp -pv {MAINPATH}/modules_partitioning/* .'.format(**args), shell=True)
     subprocess.call('kpp_edit_initialize.py {ROOT} total'.format(**args), shell=True, env=env)
     subprocess.call('kpp_edit_makefile.py {ROOT}'.format(**args), shell=True, env=env)
-    subprocess.call('kpp_extract_indices.py {ROOT} mcm_{ROOT}_mass.txt'.format(**args), shell=True, env=env)
+    subprocess.call('kpp_extract_indices.py {ROOT} mcm_{ROOT}_mass.txt 2'.format(**args), shell=True, env=env)
     subprocess.call('kpp_generate_AERmodules.py {ROOT}'.format(**args), shell=True, env=env)
     subprocess.call('kpp_edit_main.py {ROOT}'.format(**args), shell=True, env=env)
     subprocess.call('kpp_generate_SIMPOLGroups.py {ROOT} mcm_{ROOT}_mass.txt {ROOT}_SIMPOLGroups.csv'.format(**args), shell=True, env=env)

@@ -66,6 +66,7 @@ module {ROOT}_InitializeAER
       inquire(file="molefrac_init.txt", exist=existp)
       if (existp) then 
          open(55,file="molefrac_init.txt", status="old")
+         read(55,*) !header/comment line
          do i = 1,NorganicSPEC
             read(55,*) idx, molefrac
             a0(idx) = molefrac

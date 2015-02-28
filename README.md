@@ -13,11 +13,9 @@ The user should provide compound-specific information and initial conditions (e.
 compounds/
 
 * apinene_1/
-	* {ROOT}.def
 	* {ROOT}.kpp
 	* mcm\_{ROOT}\_mass.txt
 * apinene_2/
-	* {ROOT}.def
 	* {ROOT}.kpp
 	* mcm\_{ROOT}\_mass.txt
 
@@ -28,14 +26,14 @@ simulations/
   		* (for gas,total) photolysis.txt
   		* (for gas,total) [optional] input\_time.txt
   		* (for gas,total) [optional] input\_temp.txt
-  		* (for gas,total) [optional] cgas\_init.txt
+  		* (for gas,total) [optional] cgas\_init.def
   		* (for total) input\_partitioning.txt
   		* (for total) [optional] molefrac\_init.txt
 	* run\_002/
   		* (for gas,total) photolysis.txt
   		* (for gas,total) [optional] input\_time.txt
   		* (for gas,total) [optional] input\_temp.txt
-  		* (for gas,total) [optional] cgas\_init.txt
+  		* (for gas,total) [optional] cgas\_init.def
   		* (for total) input\_partitioning.txt
   		* (for total) [optional] molefrac\_init.txt
 * apinene\_2/ (*same structure as above*)
@@ -62,33 +60,32 @@ Mechanism information:
 Simulations:
 
 - photolysis.txt: input for kpp_constants.f90
-- input\_time.txt
+- input\_time.txt: time in units of seconds.
 
 		{TSTART}
 		{DURATION}
 		{DT}
 
-- input\_temp.txt
+- input\_temp.txt: temperature and conversion factor (ppb to molec/cm^3) (untested)
 
 		{TEMP}
 		{CFACTOR}
 
-- cgas\_init.txt. `IND` is the compound index (use "scripts/kpp\_extract\_indices.py") and `PPB` is the concentration in ppb
+- cgas\_init.def: initial gas-phase concentrations (in ppb) in equation form as you would write in the .def file
 
-		{IND1} {PPB1}
-		{IND2} {PPB2}
+		{COMPOUND1} = {PPB1}
+		{COMPOUND1} = {PPB2}
 		...
 
-- input\_partitioning.txt. `M0` is the initial aerosol concentration and `PARTITION\_SUBSTEPS` should be 1 (or 0 for no partitioning)
+- input\_partitioning.txt: `M0` is the initial aerosol concentration and `PARTITION\_SUBSTEPS` should be 1 (or 0 for no partitioning)
 
 		{M0}
 		{PARTITION_SUBSTEPS}
 
-- molefrac\_init.txt. `IND` is the organic compound index and `a0` is the initial mole fraction
+- molefrac\_init.txt: `IND` is the organic compound index and `a0` is the initial mole fraction
 
 		{IND1} {a0(1)}
 		{IND2} {a0(2)}
-
 
 
 ## Instructions

@@ -75,7 +75,28 @@ def ln(src,dst):
 def constructfiles(srcpath,dstpath,f):
     return os.path.join(srcpath,f), os.path.join(dstpath,f)
 
+def convert_cgasdef(runpath):
+    indextable = 'compound_indices_table.csv'
+    deffile = os.path.join(runpath,'cgas_init.def')
+    txtfile = os.path.join(runpath,'cgas_init.txt')
+    if os.path.exists(deffile):
+        import pandas as pd
+        indices = pd.read_csv(indextable,index_col='compound',dtype=str)
+        with open(txtfile,'w') as fout:
+            with open(deffile) as finp:
+                for line in finp:
+                    compound, value = tuple(map(str.strip,line.split('=')))
+                    compound = compound.upper()
+                    if compound=='H2O':
+                        idx = '0'
+                    else:
+                        idx = indices.ix[compound,'index']
+                    fout.write('\t'.join([idx, value])+'\n')
+                        
+        
 runpath = os.path.join(HERE,args['RUNPATH'])
+
+convert_cgasdef(runpath)
 
 for label,p in paths.items():
     ## option

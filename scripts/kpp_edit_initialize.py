@@ -92,21 +92,18 @@ class InitModify:
     if (existp) then
        open (unit=15, file="cgas_init.txt", status='old',    &
              access="sequential", form="formatted", action="read")
-       x = (1e-5)*CFACTOR
        do
           read (15, *, iostat=filestat)  idx, conc ! CHECK PRECISION
           if (filestat /= 0) exit
-          VAR(idx) = conc*x
+          if (idx .eq. 0) then
+             H2O = conc
+          else       
+             VAR(idx) = conc*CFACTOR
+          endif
        end do
        close(15)
 
-       TEND = TSTART + DURATION
-
-       write(*,*) "read from file: ", "input_time.txt"
-       write(*,*) "read in: ", &
-            "TSTART: ", TSTART, &
-            "DURATION: ", DURATION, &
-            "DT: ", DT 
+       write(*,*) "read from file: ", "cgas_init.txt"
     endif
 
     ! overwrite temperature (optional) (untested)
@@ -133,9 +130,8 @@ class InitModify:
 
        write(*,*) "read from file: ", "input_temp.txt"
        write(*,*) "read in: ", &
-            "CFACTOR: ", TSTART, &
-            "DURATION: ", DURATION, &
-            "DT: ", DT 
+            "TEMP (K): ", TEMP, &
+            "CFACTOR (molec/cm^3/ppb): ", CFACTOR_NEW
     endif
     ! End overwriting initialization FB/ST
 '''.format(ROOT=self.root)
