@@ -13,6 +13,7 @@
   ! variables initialized by {ROOT}_Initialize.f90
   integer             :: partition_substeps !FB
   real(kind=dp)       :: cAER0_total        !FB: initial total amount of aerosol present (default: 313E11 (NSPEC*E11), can be overwritten by input textfile)
+  integer             :: integratorcheck = 0
 
   ! variables initialized by {ROOT}_InitializeAER.f90
   ! FIXED PARAMETERS (contain all the species, including anorganics)

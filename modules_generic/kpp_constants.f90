@@ -8,7 +8,7 @@ MODULE constants
   INTEGER, PARAMETER :: dp=8
   INTEGER, PARAMETER :: mnsp=250, mre=2000
   INTEGER i
-  CHARACTER(len=16)   :: lightmode
+  CHARACTER(len=20)   :: lightmode
   ! variables for zenith routine which calculates zenith angle
   REAL(dp) theta, secx, cosx
   ! generic reaction rate variables

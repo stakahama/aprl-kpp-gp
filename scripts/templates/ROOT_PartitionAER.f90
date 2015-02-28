@@ -30,7 +30,8 @@ contains
 
     ! modules
     use {ROOT}_Global, only: TEMP, NSPEC, CGAS => C, TIME, TEND, TSTART ! FB: to print the total TIME, TEND, and TSTART
-    use {ROOT}_GlobalAER, only: CAER, VPAER, organic_selection_binary, d_ve_aerosols, nr_aerosol_particles, Diff_coeff, &
+    use {ROOT}_GlobalAER, only: CAER, VPAER, organic_selection_binary, &
+         d_ve_aerosols, nr_aerosol_particles, Diff_coeff, &
          displayed_not_enough_CGAS, displayed_not_enough_CAER, & ! FB: to count the error_messages
          f_a_Kn
     use {ROOT}_monitor, only: SPC_NAMES ! FB: to plot the spc_names
@@ -104,7 +105,8 @@ contains
          pi_constant, &
          molecular_masses, Avogadro, & ! !FB: to convert from molec/cm3 to µg/m
          displayed_not_enough_CGAS, displayed_not_enough_CAER, & ! FB: to count the error_messages
-         organic_selection_indices ! FB: only used for dlsode (creation of special vector y (only containing organics, like gamma))
+         organic_selection_indices, & ! FB: only used for dlsode (creation of special vector y (only containing organics, like gamma))
+         integratorcheck
     use {ROOT}_monitor, only: SPC_NAMES ! FB: to plot the spc_names
 
     ! local variables
@@ -125,34 +127,36 @@ contains
     integer, allocatable, dimension(:) :: iwork
     real (kind=dp) :: dCGAS_i, dCAER_i ! needed for the check whether d CGAS/dt = -d CAER/dt for each compound
 
-    ! A) INITIAL CHECK for negative concentrations compound and correct
-    do ix = 1,NSPEC ! TODO: should I only do this check for organic compounds, or for all? only for organic: do index = 1,NorganicSPEC; ix = organic_selection_indices(index); ... leave the rest of the loop the same
-       if (CAER_old(ix) < 0) then
-          ! document by printing:
-          ERROR_MSG = 'INTEGRATOR_ERROR: INITIAL_CHECK: correct negative CAER concentration: for compound: '
-401       FORMAT(F6.1,'%. T=',ES9.3, ' ', A, I4, ' ', A, ' ', A, ES18.10E3, A, ES18.10E3, A, I3)
-          write(*,401) (TIME-TSTART)/(TEND-TSTART)*100, TIME, TRIM(ERROR_MSG), &
-               ix, SPC_NAMES(ix), &
-               ' CAER: ', CAER_old(ix), ' VPAER: ', VPAER(ix), '     at substep ', current_step
-          write(88,401) (TIME-TSTART)/(TEND-TSTART)*100, TIME, TRIM(ERROR_MSG), &
-               ix, SPC_NAMES(ix), &
-               ' CAER: ', CAER_old(ix), ' VPAER: ', VPAER(ix), '     at substep ', current_step
-          ! and correct
-          CAER_old(ix) = 0
-       end if
-       if (CGAS_old(ix) < 0) then
-          ! document by printing:
-          ERROR_MSG = 'INTEGRATOR_ERROR: INITIAL_CHECK: correct negative CGAS concentration: for compound: '
-          write(*,401) (TIME-TSTART)/(TEND-TSTART)*100, TIME, TRIM(ERROR_MSG), &
-               ix, SPC_NAMES(ix), &
-               ' CGAS: ', CGAS_old(ix), ' VPAER: ', VPAER(ix), '     at substep ', current_step
-          write(88,401) (TIME-TSTART)/(TEND-TSTART)*100, TIME, TRIM(ERROR_MSG), &
-               ix, SPC_NAMES(ix), &
-               ' CGAS: ', CGAS_old(ix), ' VPAER: ', VPAER(ix), '     at substep ', current_step
-          ! and correct
-          CGAS_old(ix) = 0
-       end if
-    end do      ! NOTE: without printing warnings the entire loop above could be written: "where(CAER_old < 0) CAER_old = 0" and "where(CGAS_old < 0) CGAS_old = 0"
+    if (integratorcheck .gt. 0) then 
+       ! A) INITIAL CHECK for negative concentrations compound and correct
+       do ix = 1,NSPEC ! TODO: should I only do this check for organic compounds, or for all? only for organic: do index = 1,NorganicSPEC; ix = organic_selection_indices(index); ... leave the rest of the loop the same
+          if (CAER_old(ix) < 0) then
+             ! document by printing:
+             ERROR_MSG = 'INTEGRATOR_ERROR: INITIAL_CHECK: correct negative CAER concentration: for compound: '
+401          FORMAT(F6.1,'%. T=',ES9.3, ' ', A, I4, ' ', A, ' ', A, ES18.10E3, A, ES18.10E3, A, I3)
+             write(*,401) (TIME-TSTART)/(TEND-TSTART)*100, TIME, TRIM(ERROR_MSG), &
+                  ix, SPC_NAMES(ix), &
+                  ' CAER: ', CAER_old(ix), ' VPAER: ', VPAER(ix), '     at substep ', current_step
+             write(88,401) (TIME-TSTART)/(TEND-TSTART)*100, TIME, TRIM(ERROR_MSG), &
+                  ix, SPC_NAMES(ix), &
+                  ' CAER: ', CAER_old(ix), ' VPAER: ', VPAER(ix), '     at substep ', current_step
+             ! and correct
+             CAER_old(ix) = 0
+          end if
+          if (CGAS_old(ix) < 0) then
+             ! document by printing:
+             ERROR_MSG = 'INTEGRATOR_ERROR: INITIAL_CHECK: correct negative CGAS concentration: for compound: '
+             write(*,401) (TIME-TSTART)/(TEND-TSTART)*100, TIME, TRIM(ERROR_MSG), &
+                  ix, SPC_NAMES(ix), &
+                  ' CGAS: ', CGAS_old(ix), ' VPAER: ', VPAER(ix), '     at substep ', current_step
+             write(88,401) (TIME-TSTART)/(TEND-TSTART)*100, TIME, TRIM(ERROR_MSG), &
+                  ix, SPC_NAMES(ix), &
+                  ' CGAS: ', CGAS_old(ix), ' VPAER: ', VPAER(ix), '     at substep ', current_step
+             ! and correct
+             CGAS_old(ix) = 0
+          end if
+       end do      ! NOTE: without printing warnings the entire loop above could be written: "where(CAER_old < 0) CAER_old = 0" and "where(CGAS_old < 0) CGAS_old = 0"
+    endif
 
     ! B) INTEGRATION
     change = 0
@@ -207,21 +211,23 @@ contains
     deallocate(rwork)
     deallocate(iwork)
 
-    ! check whether d CGAS/dt = -d CAER/dt 
-    do i=1,NorganicSPEC
-       dCGAS_i = (CGAS_old(organic_selection_indices(i)) - CGAS_new(organic_selection_indices(i)))
-       dCAER_i = (CAER_old(organic_selection_indices(i)) - CAER_new(organic_selection_indices(i)))
-       if (abs(dCGAS_i + dCAER_i)>atol) then
-          ERROR_MSG = 'INTEGRATOR_ERROR: DLSODE OUTPUT: d CGAS/dt = -d CAER/dt is not fulfilled for compound: '
-402       FORMAT(F6.1,'%. T=',ES9.3, ' ', A, I4, ' ', A, ' ', A, ES18.10E3, A, ES18.10E3, A, I3)
-          write(*,402) (TIME-TSTART)/(TEND-TSTART)*100, TIME, TRIM(ERROR_MSG), &
-               organic_selection_indices(i), SPC_NAMES(organic_selection_indices(i)), &
-               ' dCGAS/dt: ', dCGAS_i, ' dCAER/dt: ', dCAER_i, '     at substep ', current_step
-          write(88,402) (TIME-TSTART)/(TEND-TSTART)*100, TIME, TRIM(ERROR_MSG), &
-               organic_selection_indices(i), SPC_NAMES(organic_selection_indices(i)), &
-               ' dCGAS/dt: ', dCGAS_i, ' dCAER/dt: ', dCAER_i, '     at substep ', current_step
-       end if
-    end do
+    if (integratorcheck .gt. 0) then
+       ! check whether d CGAS/dt = -d CAER/dt 
+       do i=1,NorganicSPEC
+          dCGAS_i = (CGAS_old(organic_selection_indices(i)) - CGAS_new(organic_selection_indices(i)))
+          dCAER_i = (CAER_old(organic_selection_indices(i)) - CAER_new(organic_selection_indices(i)))
+          if (abs(dCGAS_i + dCAER_i)>atol) then
+             ERROR_MSG = 'INTEGRATOR_ERROR: DLSODE OUTPUT: d CGAS/dt = -d CAER/dt is not fulfilled for compound: '
+402          FORMAT(F6.1,'%. T=',ES9.3, ' ', A, I4, ' ', A, ' ', A, ES18.10E3, A, ES18.10E3, A, I3)
+             write(*,402) (TIME-TSTART)/(TEND-TSTART)*100, TIME, TRIM(ERROR_MSG), &
+                  organic_selection_indices(i), SPC_NAMES(organic_selection_indices(i)), &
+                  ' dCGAS/dt: ', dCGAS_i, ' dCAER/dt: ', dCAER_i, '     at substep ', current_step
+             write(88,402) (TIME-TSTART)/(TEND-TSTART)*100, TIME, TRIM(ERROR_MSG), &
+                  organic_selection_indices(i), SPC_NAMES(organic_selection_indices(i)), &
+                  ' dCGAS/dt: ', dCGAS_i, ' dCAER/dt: ', dCAER_i, '     at substep ', current_step
+          end if
+       end do
+    endif
 
     ! and carry on concentration of inorganic compounds
     do i=1,NSPEC
@@ -237,42 +243,44 @@ contains
     ! -------------------- END DLSODE --------------------
 
     ! -------------------- BEGIN CHECK --------------------
-    ! C) FINAL CHECK for available amount of each compound and correct (only for forward and backward)
+    ! C) FINAL CHECK for available amount of each compound and correct
     
-    ! check all the species
-    do ix = 1,NSPEC ! TODO should I only do this check for organic compounds, or for all? (to change to only for organic: do index = 1,NorganicSPEC; ix = organic_selection_indices(index); ... leave the rest of the loop the same)
-       ! check CAER
-       if (CAER_old(ix) + change(ix) < 0) then
-          ! display error message if it concerns organic species
-          if (organic_selection_binary(ix) == 1 .AND. displayed_not_enough_CAER(ix) < 2) then
-             ERROR_MSG = 'INTEGRATOR_ERROR: FINAL_CHECK: not enough CAER: for compound: '
-403          FORMAT(F6.1,'%. T=',ES9.3, ' ', A, I4, ' ', A, ' ', A, ES18.10E3, A, ES18.10E3, A, I3)
-             write(*,403) (TIME-TSTART)/(TEND-TSTART)*100, TIME, TRIM(ERROR_MSG), &
-                  ix, SPC_NAMES(ix), &
-                  'CAER_before: ', CAER_old(ix), ' intended change: ', change(ix), '     at substep ', current_step
-             write(88,403) (TIME-TSTART)/(TEND-TSTART)*100, TIME, TRIM(ERROR_MSG), &
-                  ix, SPC_NAMES(ix), &
-                  'CAER_before: ', CAER_old(ix), ' intended change: ', change(ix), '     at substep ', current_step
+    if (integratorcheck .gt. 0) then
+       ! check all the species
+       do ix = 1,NSPEC ! TODO should I only do this check for organic compounds, or for all? (to change to only for organic: do index = 1,NorganicSPEC; ix = organic_selection_indices(index); ... leave the rest of the loop the same)
+          ! check CAER
+          if (CAER_old(ix) + change(ix) < 0) then
+             ! display error message if it concerns organic species
+             if (organic_selection_binary(ix) == 1 .AND. displayed_not_enough_CAER(ix) < 2) then
+                ERROR_MSG = 'INTEGRATOR_ERROR: FINAL_CHECK: not enough CAER: for compound: '
+403             FORMAT(F6.1,'%. T=',ES9.3, ' ', A, I4, ' ', A, ' ', A, ES18.10E3, A, ES18.10E3, A, I3)
+                write(*,403) (TIME-TSTART)/(TEND-TSTART)*100, TIME, TRIM(ERROR_MSG), &
+                     ix, SPC_NAMES(ix), &
+                     'CAER_before: ', CAER_old(ix), ' intended change: ', change(ix), '     at substep ', current_step
+                write(88,403) (TIME-TSTART)/(TEND-TSTART)*100, TIME, TRIM(ERROR_MSG), &
+                     ix, SPC_NAMES(ix), &
+                     'CAER_before: ', CAER_old(ix), ' intended change: ', change(ix), '     at substep ', current_step
+             end if
+             ! correct to zero
+             change(ix) = - CAER_old(ix)
           end if
-          ! correct to zero
-          change(ix) = - CAER_old(ix)
-       end if
-       ! check CGAS
-       if (CGAS_old(ix) - change(ix) < 0) then
-          ! display error message if it concerns organic species
-          if (organic_selection_binary(ix) == 1 .AND. displayed_not_enough_CGAS(ix) < 2) then
-             ERROR_MSG = 'INTEGRATOR_ERROR: FINAL_CHECK: not enough CGAS: for compound: '
-             write(*,403) (TIME-TSTART)/(TEND-TSTART)*100, TIME, TRIM(ERROR_MSG), &
-                  ix, SPC_NAMES(ix), &
-                  'CGAS_before: ', CGAS_old(ix), ' intended change: ', change(ix), '     at substep ', current_step
-             write(88,403) (TIME-TSTART)/(TEND-TSTART)*100, TIME, TRIM(ERROR_MSG), &
-                  ix, SPC_NAMES(ix), &
-                  'CGAS_before: ', CGAS_old(ix), ' intended change: ', change(ix), '     at substep ', current_step
+          ! check CGAS
+          if (CGAS_old(ix) - change(ix) < 0) then
+             ! display error message if it concerns organic species
+             if (organic_selection_binary(ix) == 1 .AND. displayed_not_enough_CGAS(ix) < 2) then
+                ERROR_MSG = 'INTEGRATOR_ERROR: FINAL_CHECK: not enough CGAS: for compound: '
+                write(*,403) (TIME-TSTART)/(TEND-TSTART)*100, TIME, TRIM(ERROR_MSG), &
+                     ix, SPC_NAMES(ix), &
+                     'CGAS_before: ', CGAS_old(ix), ' intended change: ', change(ix), '     at substep ', current_step
+                write(88,403) (TIME-TSTART)/(TEND-TSTART)*100, TIME, TRIM(ERROR_MSG), &
+                     ix, SPC_NAMES(ix), &
+                     'CGAS_before: ', CGAS_old(ix), ' intended change: ', change(ix), '     at substep ', current_step
+             end if
+             ! correct to zero
+             change(ix) = CGAS_old(ix)
           end if
-          ! correct to zero
-          change(ix) = CGAS_old(ix)
-       end if
-    end do ! TODO: without printing warnings the entire loop above could be written: "where(CAER_old + change < 0) change = -CAER_old" and "where(CAER_old + change < 0) change = CGAS_old"
+       end do ! TODO: without printing warnings the entire loop above could be written: "where(CAER_old + change < 0) change = -CAER_old" and "where(CAER_old + change < 0) change = CGAS_old"
+    endif
 
     ! update concentrations
     CAER_new = CAER_old + change;

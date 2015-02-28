@@ -35,7 +35,8 @@ class InitModify:
 '''
 
         self.declaration_aer = '''
-    USE apinene_GlobalAER, only: partition_substeps, cAER0_total ! FB
+    USE apinene_GlobalAER, only: partition_substeps, cAER0_total, &
+         integratorcheck           ! FB    
 '''        
         
         self.define_inputs = '''
@@ -57,13 +58,15 @@ class InitModify:
     ! read in defaults defined in input.txt
     read (15, 113)  cAER0_total
     read (15, 111)  partition_substeps !0=no partitioning
+    read (15, 111)  integratorcheck    !0=off; 1=on
     
     close(15)
     ! echo
     write(*,*) "read from file: ", "input_partitioning.txt"
     write(*,*) "read in values: ", &
          "total initial CAER [g/m3]: ", cAER0_total, &
-         "partition_substeps: ", partition_substeps
+         "partition_substeps: ", partition_substeps, &
+         "integratorcheck: ", integratorcheck
 '''
         self.read_optional = '''
     ! overwrite time (optional) (tested)
