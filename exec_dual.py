@@ -28,7 +28,7 @@ import argparse
 parser = argparse.ArgumentParser(description='run kpp for gas-phase and total simulation')
 parser.add_argument('ROOT',type=str)
 parser.add_argument('RUNPATH',type=str)
-parser.add_argument('MODE',type=str,default='gas,total')
+parser.add_argument('MODE',type=str,nargs='?',default='gas,total')
 args = dict(vars(parser.parse_args()))
 
 ###_* -------------------- define paths --------------------

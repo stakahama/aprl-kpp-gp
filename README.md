@@ -155,7 +155,7 @@ Arguments:
 
 Example usage:
 ```
-$ build_dual.py apinene dark ../../compounds/apinene_1
+$ build_dual.py apinene ../../compounds/apinene_1
 ```
 
 Outputs (in working directory):
