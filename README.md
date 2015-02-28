@@ -4,49 +4,96 @@ kppaermod
 Program to modify outputs of KPP to run gas+aerosol simulations. Gas-only simulation program also modified to receive same inputs as gas+aerosol model.
 
 
-## Directory structure (user inputs)
+## User inputs
 
-Compound-specific information and initial conditions (e.g., "compounds/"):
+### Directory structure
+
+The user should provide compound-specific information and initial conditions (e.g., in "compounds/") and simulations parameters (e.g., in "simulations/"). "photolysisfiles/" are provided and the appropriate "photolysis.txt" should be copied into the run subdirectory. Using the same name for the top level directory (e.g., "apinene\_1") for the compounds and simulation directories may be helpful. 
+
+compounds/
 
 * apinene_1/
 	* {ROOT}.def
 	* {ROOT}.kpp
-	* mcm\_{ROOT}\_mass.txt (downloaded as mcm\_subset\_mass.txt from MCM web)
+	* mcm\_{ROOT}\_mass.txt
 * apinene_2/
 	* {ROOT}.def
 	* {ROOT}.kpp
-	* mcm\_{ROOT}\_mass.txt (downloaded as mcm\_subset\_mass.txt from MCM web)
+	* mcm\_{ROOT}\_mass.txt
 
+simulations/
 
-Simulations (e.g., "simulations/") (here, the name of subfolders should be "run\_" followed by a three-digit integer):
-
-* apinene_1/
+* apinene\_1/
 	* run\_001/
-	  * input.txt
-	  * a0.txt
+  		* (for gas,total) photolysis.txt
+  		* (for gas,total) [optional] input\_time.txt
+  		* (for gas,total) [optional] input\_temp.txt
+  		* (for gas,total) [optional] cgas\_init.txt
+  		* (for total) input\_partitioning.txt
+  		* (for total) [optional] molefrac\_init.txt
 	* run\_002/
-	  * input.txt
-	  * a0.txt
-* apinene_2/
-	* run\_001/
-	  * input.txt
-	  * a0.txt
-	* run\_002/
-	  * input.txt
-	  * a0.txt
+  		* (for gas,total) photolysis.txt
+  		* (for gas,total) [optional] input\_time.txt
+  		* (for gas,total) [optional] input\_temp.txt
+  		* (for gas,total) [optional] cgas\_init.txt
+  		* (for total) input\_partitioning.txt
+  		* (for total) [optional] molefrac\_init.txt
+* apinene\_2/ (*same structure as above*)
 
-Using the same name for the top level directory (e.g., "apinene\_1") for the compounds and simulation directories may be helpful.
+photolysisfiles/
 
-Currently, "apinene\_1", "apinene\_2", etc. should contain runs which vary according to initial gas-phase concentrations, temperature and method for deriving photolysis rate constants (technically, the latter can be changed by replacing "photolysis.txt" but currently it is not grouped with input files). This can be changed if desired. This can be modified in kpp\_edit\_initialize.py if desired. After generating the gas and total (gas+aerosol) simulation models ({ROOT}.exe), these parameters can be changed for various simulations ("run\_{DDD}/"):
+* original/
+	* photolysis.txt
+* dark/
+	* photolysis.txt
+* constantlight/
+	* photolysis.txt
 
-* The duration and timesteps can be varied in "input.txt".
-* The initial aerosol concentration value ("C<sub>OA</sub>") and integrator (*always "dlsode"*) is also specified in "input.txt".
-* The initial aerosol mole fractions can be varied according to "a0.txt".
+The main objective is to build a program for a fixed mechanism (set of chemical reactions, species) to simulate over a range of temperatures, concentrations, and timesteps. After generating the gas and total (gas+aerosol) simulation models ("exec\_gas/{ROOT}.exe" or "exec\_total/{ROOT}.exe" in each simulation subdirectory), parameters can be changed through input files for various simulations ("run\_{DDD}/"). Note that runs using "input\_temp.txt" and "cgas\_init.txt" are untested and should be against a reference simulation. 
+
+### File descriptions
+
+Mechanism information:
+
+- {ROOT}.def: combines organic and inorganic kpp files; specifies initial concentrations, temperature, and time parameters
+- {ROOT}.kpp: generated from MCM web
+- mcm\_{ROOT}\_mass.txt: table of masses and SMILES strings (downloaded as mcm\_subset\_mass.txt)
+
+Simulations:
+
+- photolysis.txt: input for kpp_constants.f90
+- input\_time.txt
+
+		{TSTART}
+		{DURATION}
+		{DT}
+
+- input\_temp.txt
+
+		{TEMP}
+		{CFACTOR}
+
+- cgas\_init.txt. `IND` is the compound index (use "scripts/kpp\_extract\_indices.py") and `PPB` is the concentration in ppb
+
+		{IND1} {PPB1}
+		{IND2} {PPB2}
+		...
+
+- input\_partitioning.txt. `M0` is the initial aerosol concentration and `PARTITION\_SUBSTEPS` should be 1 (or 0 for no partitioning)
+
+		{M0}
+		{PARTITION_SUBSTEPS}
+
+- molefrac\_init.txt. `IND` is the organic compound index and `a0` is the initial mole fraction
+
+		{IND1} {a0(1)}
+		{IND2} {a0(2)}
+
 
 
 ## Instructions
 
-Add kppaermod to the list of paths in which executable are searched:
+Add kppaermod/ to the list of paths in which executable are searched:
 
 ```
 $ export PATH=~/git/projects/kppaermod:$PATH
@@ -73,8 +120,8 @@ $ search_struct.py {ROOT} {PROGPATH}
 
 Arguments:
 
-* `ROOT`: 
-* (optional) `PROGPATH`: path to aprl-structsearch if not on executable path
+* `ROOT`: label for KPP
+* [optional] `PROGPATH`: path to aprl-structsearch if not on executable path
 
 
 Example usage:
@@ -96,14 +143,15 @@ Outputs (in working directory):
 
 Command:
 ```
-$ build_dual.py {ROOT} {LIGHT} {CPATH} {--skipbuild}
+$ build_dual.py {ROOT} {CPATH} {--skipbuild} {--onlygas} {--onlytotal}
 ```
 Arguments:
 
-* `ROOT`:
-* `LIGHT`: one of "original", "light", or "dark" (without quotes)
+* `ROOT`: label for KPP
 * `CPATH`: path to compounds directory
-* (optional) `--skipbuild`: will not run kpp again but only use output of kpp (in "kppbuild/") to generate "exec\_gas/" and "exec\_total/"
+* [optional] `--skipbuild`: will not run kpp again but only use output of kpp (in "kppbuild/") to generate "exec\_gas/" and "exec\_total/". Default is to build.
+* [optional] `--onlygas`: will not run kpp again but only use output of kpp (in "kppbuild/") to generate "exec\_gas/". Default is to generate "exec\_total".
+* [optional] `--onlytotal`: will not run kpp again but only use output of kpp (in "kppbuild/") to generate  "exec\_total/". Default is to generate "exec\_total".
 
 Example usage:
 ```
@@ -113,7 +161,7 @@ $ build_dual.py apinene dark ../../compounds/apinene_1
 Outputs (in working directory):
 
 * contents of {CPATH} are copied here
-* kppbuild/: directory of kpp output
+* kppbuild/: kpp output
 * exec\_gas/: executable for gas-phase simultions
 * exec\_total/: executable for total-phase simulations
 
@@ -123,25 +171,52 @@ Outputs (in working directory):
 
 Command:
 ```
-$ exec_dual.py {ROOT} {NUMBERS}
+$ exec_dual.py {ROOT} {RUNPATH} {MODE}
 ```
 
 Arguments:
 
-* `ROOT`: 
-* `NUMBERS`: a single number, or several numbers concatenated by commas. e.g., "1", or "1,2" (without quotes) and so on.
-
+* `ROOT`: label for KPP
+* `RUNPATH`: name of input folder
+* [optional] `MODE`: one of "gas,total", "gas", or "total" (without quotes). Default is "gas,total"
 
 Example usage:
 ```
-$ exec_dual.py apinene 1,2
+$ exec_dual.py apinene run_varyvoc_001
 ```
 
 Outputs (in run directories):
 
-* run\_{DDD}/gas/{ROOT}.dat
-* run\_{DDD}/gas/{ROOT}\_formatted.txt
-* run\_{DDD}/total/{ROOT}.dat
-* run\_{DDD}/total/{ROOT}\_formatted.txt
-* run\_{DDD}/total/{ROOT}\_aer.dat
-* run\_{DDD}/total/{ROOT}\_aer\_formatted.txt
+* runpath/gas/{ROOT}.dat
+* runpath/gas/{ROOT}\_formatted.txt
+* runpath/total/{ROOT}.dat
+* runpath/total/{ROOT}\_formatted.txt
+* runpath/total/{ROOT}\_aer.dat
+* runpath/total/{ROOT}\_aer\_formatted.txt
+
+### Build executables for gas-phase only ("gas") and gas+aerosol ("total") simulations
+
+*Run in simulation directory (e.g., "simulations/apinene\_1/")*.
+
+Command:
+```
+$ harvest_parms.py {ROOT} {RUNPATH}
+```
+
+Arguments:
+
+* `ROOT`: label for KPP
+* [optional] `RUNPATH`: zero or more paths. if omitted, all paths beginning with "run\_" will be harvested
+
+Example usage:
+```
+$ harvest_parms.py apinene
+```
+
+Outputs (in working directory):
+
+* parameter_table.csv
+
+Notes:
+
+* Currently does not try to read in "cgas\_init.txt" or "molefrac\_init.txt".

@@ -10,24 +10,26 @@ module {ROOT}_InitializeAER
       use {ROOT}_Global, only : TEMP, CFACTOR, CGAS => C, TSTART
       use {ROOT}_GlobalAER, only : CAER, VPAER, organic_selection_binary, Avogadro, molecular_masses, &
            nr_aerosol_particles, d_ve_aerosols, Diff_coeff, NorganicSPEC, cAER0_total, &
+           runpath, &! FB: to output to a file with the same name in the in_outputs-folder
            Cstar, gamma, f_a_Kn, organic_selection_indices ! FB: variables for DLSODE routine
       use {ROOT}_SIMPOLGroups, only: substruct_count, ngroups
-      use {ROOT}_monitor, only: SPC_NAMES ! FB: to write the spc_names into the output file
       use simpol_module, only: simpolvp, press2conc
+      use {ROOT}_monitor, only: SPC_NAMES ! FB: to write the spc_names into the output file
 
       ! local variables
-      logical                     :: existp
-      integer                     :: i
-      integer                     :: abundance(ngroups)
-      real(dp)                    :: vp_atm=0.d0
+      logical :: exist
+      integer  :: i
+      integer  :: abundance(ngroups)
+      real(dp) :: vp_atm=0.d0
 
-      real(dp)                    :: CAER_total_in_g_per_m3, CAER_total_in_molecules_per_cm3, mean_molecular_mass_of_organics !FB: to convert initial amount of aerosol from µg/m3 to molecules/cm3
-      real(dp), dimension(NSPEC)  :: a0
-      real (kind=dp)              :: alpha, lambda, Kn
+      real(dp) :: CAER_total_in_g_per_m3, CAER_total_in_molecules_per_cm3, mean_molecular_mass_of_organics !FB: to convert initial amount of aerosl from µg/m3 to molecules/cm3
+      real(dp), dimension(NSPEC) :: a0
+      real (kind=dp) :: alpha, lambda, Kn
       real (kind = dp), parameter :: pi = 4_dp * atan(1.0_dp)
 
-      integer                     :: idx
-      real(dp)                    :: molefrac
+      integer  :: idx
+      real(dp) :: molefrac
+      open(55,file=runpath//'/a0.txt', status='old')
       
       ! body
       ! FIXED PARAMETERS
@@ -63,17 +65,10 @@ module {ROOT}_InitializeAER
 !!$      a0 = a0/sum(a0)         ! normalize
 
       a0 = 0.d0
-      inquire(file="molefrac_init.txt", exist=existp)
-      if (existp) then 
-         open(55,file="molefrac_init.txt", status="old")
-         do i = 1,NorganicSPEC
-            read(55,*) idx, molefrac
-            a0(idx) = molefrac
-         end do
-         close(55)
-      else
-         a0 = 1.d0
-      endif
+      do i = 1,NorganicSPEC
+         read(55,*) idx, molefrac
+         a0(idx) = molefrac
+      end do
 
       ! calculate initial CAER defined by the amount of CAER_total_in_g_per_m3     
 
@@ -98,23 +93,23 @@ module {ROOT}_InitializeAER
       end do
 
       ! open files and overwrite them completely
-      inquire(file="output_CGAS.txt", exist=existp)
-      if (existp) then
-         open(86, file="output_CGAS.txt", status="old", position="rewind", action="write")
+      inquire(file=runpath//"output_{ROOT}_CGAS.txt", exist=exist)
+      if (exist) then
+         open(86, file=runpath//"output_{ROOT}_CGAS.txt", status="old", position="rewind", action="write")
       else
-         open(86, file="output_CGAS.txt", status="new", action="write")
+         open(86, file=runpath//"output_{ROOT}_CGAS.txt", status="new", action="write")
       end if
-      inquire(file="output_CAER.txt", exist=existp)
-      if (existp) then
-         open(87, file="output_CAER.txt", status="old", position="rewind", action="write")
+      inquire(file=runpath//"output_{ROOT}_CAER.txt", exist=exist)
+      if (exist) then
+         open(87, file=runpath//"output_{ROOT}_CAER.txt", status="old", position="rewind", action="write")
       else
-         open(87, file="output_CAER.txt", status="new", action="write")
+         open(87, file=runpath//"output_{ROOT}_CAER.txt", status="new", action="write")
       end if
-      inquire(file="output_ERRORS.txt", exist=existp)
-      if (existp) then
-         open(88, file="output_ERRORS.txt", status="old", position="rewind", action="write")
+      inquire(file=runpath//"ERRORS.txt", exist=exist)
+      if (exist) then
+         open(88, file=runpath//"ERRORS.txt", status="old", position="rewind", action="write")
       else
-         open(88, file="output_ERRORS.txt", status="new", action="write")
+         open(88, file=runpath//"ERRORS.txt", status="new", action="write")
       end if
       write(86, 986) 'TIME', (TRIM(spc_names(i)), i=1,NSPEC)
       write(87,986) 'TIME', (TRIM(spc_names(i)), i=1,NSPEC)

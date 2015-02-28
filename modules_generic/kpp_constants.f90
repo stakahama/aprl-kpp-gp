@@ -8,7 +8,7 @@ MODULE constants
   INTEGER, PARAMETER :: dp=8
   INTEGER, PARAMETER :: mnsp=250, mre=2000
   INTEGER i
-  INTEGER photolysisidx
+  CHARACTER(len=16)   :: lightmode
   ! variables for zenith routine which calculates zenith angle
   REAL(dp) theta, secx, cosx
   ! generic reaction rate variables
@@ -83,9 +83,9 @@ CONTAINS
 
     OPEN(13,file='photolysis.txt', status='old')
     REWIND(13)
-    READ(13,*) photolysisidx
+    READ(13,*) lightmode
 
-    IF (photolysisidx .LT. 1) THEN
+    IF (lightmode .EQ. "#varying") THEN
        ! calculate zenith angle for time of day
        CALL zenith(theta, secx, cosx, time)
     ENDIF
@@ -316,8 +316,8 @@ CONTAINS
 
     ! read "photolysis.txt"
 
-    SELECT CASE (photolysisidx)
-       CASE(0)
+    SELECT CASE (lightmode)
+       CASE("#varying")
           ! ************************************************************************
           ! define photolysis reaction rates using derwent method from mcm2box.fac
           ! ************************************************************************
@@ -330,7 +330,7 @@ CONTAINS
                 j(k) = l(k)*cosx**( mm(k))*EXP(-nn(k)*secx)
              ENDIF
           END DO
-       CASE(1)
+       CASE("#dark","#constantlight")
           ! ************************************************************************
           ! fixed values
           ! ************************************************************************

@@ -66,6 +66,10 @@ contains
 !!$      USE {ROOT}_Parameters
 ! body
       CLOSE(fileidAER)
+! INTEGRATOR DIAGNOSTICS
+      CLOSE(86)
+      CLOSE(87)
+      CLOSE(88)
 
     END SUBROUTINE CloseSaveDataAER
 

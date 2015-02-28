@@ -16,7 +16,7 @@
 
 import os
 import sys
-scriptspath = os.path.dirname(__file__)
+scriptspath = os.path.join(os.path.dirname(os.path.dirname(__file__)),'scripts')
 sys.path.append(scriptspath)
 from simpol2 import SimpolClass
 from collections import OrderedDict
@@ -43,6 +43,7 @@ paths = OrderedDict([(p, os.path.join(HERE,'exec_'+p))  for p in ['gas','total']
 
 ###_ . define partitioning functions and vapor pressures
 
+###_ . define constant and partitioning function
 cfactor = 10**9          # atm to ppb conversion factor
 
 def partition(p,p0):     # p0, p in ppb
@@ -50,36 +51,36 @@ def partition(p,p0):     # p0, p in ppb
     aer = excess.map(lambda x: x if x > 0 else 0)
     return aer/aer.sum() # mole fraction
 
+###_ . read in temperature
 with open('{ROOT}.def'.format(**args)) as f:
     for line in f:
         if 'TEMP' in line:
             temp = float(line.split('=')[1].strip())
 
-simp = SimpolClass()
-simp.read_compounds('{ROOT}_SIMPOLGroups.csv'.format(**args))
-vp = simp.calc_properties(temp)
-
 ###_ . set in/out runpaths
 runpath = OrderedDict()
-runpath['INP'] = os.path.join(HERE,'run_{:03d}'.format(int(args['INPUTRUN'])))
-runpath['OUT'] = os.path.join(HERE,'run_{:03d}'.format(int(args['OUTPUTRUN'])))
+runpath['INP'] = os.path.join(HERE,args['INPUTRUN'])
+runpath['OUT'] = os.path.join(HERE,args['OUTPUTRUN'])
 
 if not os.path.exists(runpath['OUT']):
     os.mkdir(runpath['OUT'])
 
-resultsfile = os.path.join(runpath['INP'],'gas/{ROOT}_formatted.txt'.format(**args))
+resultsfile = os.path.join(runpath['INP'],'gas/{ROOT}_formatted.csv'.format(**args))
 a0file = os.path.join(runpath['OUT'],'a0.txt')
 
-###_ . read files
+###_ . calculate vapor pressures
+simp = SimpolClass()
+simp.read_compounds('{ROOT}_SIMPOLGroups.csv'.format(**args))
+vp = simp.calc_properties(temp)
 # vp = pd.read_csv('{ROOT}_props_298.csv'.format(**args),index_col='compound')
-indices = pd.read_csv('exec_total/org_indices_table.csv',index_col='compound')
-last = pd.read_csv(resultsfile,index_col='TIME').iloc[-1]
 
-###_ . calculate
+###_ . calculate mole fractions
+last = pd.read_csv(resultsfile,index_col='TIME').iloc[-1]
 molefrac = pd.DataFrame(partition(last.ix[vp.index],vp['p0']*cfactor),
                         columns=['molefrac'])
 
 ###_ . merge with index
+indices = pd.read_csv('exec_total/compound_indices_table.csv',index_col='compound')
 table = indices[['index']].join(molefrac,how='inner').sort('index')
 
 ###_ . export

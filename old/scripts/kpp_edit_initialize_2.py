@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 ################################################################################
 ##
 ## kpp_edit_initialize
@@ -25,52 +23,79 @@ class InitModify:
         self.root = root
 
         self.declaration = '''
-    integer            :: filestat            ! ST
-    logical            :: existp              ! ST
-    REAL(kind=dp)      :: DURATION            ! FB
-    REAL(kind=dp)      :: CFACTOR_NEW=1.D0    ! ST
-    REAL(kind=dp)      :: CFACTOR_RATIO=1.D0  ! ST
-    integer            :: idx                 ! ST
-    REAL(kind=dp)      :: conc                ! ST    
+    character(len=100) ::arg_string ! FB: Command-line arguments as string
+    integer            :: narg      ! FB: # of args
+    integer            :: keyboard_input
+    integer            :: filestat
+    logical            :: existp
+    REAL(kind=dp)      :: DURATION  ! FB
+    REAL(kind=dp)      :: CFACTOR_NEW=1.D0
+    REAL(kind=dp)      :: CFACTOR_RATIO=1.D0
 '''
 
         self.declaration_aer = '''
-    USE apinene_GlobalAER, only: partition_substeps, cAER0_total ! FB
+    USE apinene_GlobalAER, only: integratorcheck, partition_substeps, &
+         cAER0_total, runpath ! FB
 '''        
         
         self.define_inputs = '''
-        
-! define input.txt formats for inputs
+    !~~~> Parse command-line-arguments         ! FB
+    !Check if any arguments are found          ! FB
+    narg=command_argument_count()              ! FB
+    if(narg>0)then                             ! FB
+       call get_command_argument(1,arg_string) ! FB: Read in first argument (! Zeroth argument corresponds to program name) ! FB
+       read(arg_string,"(I10)") keyboard_input ! FB
+    else                                       ! FB
+       keyboard_input = -1                     ! FB input_file number will be asked within the program (apinene_Initialize.f90) ! FB
+    end if                                     ! FB ! FB
+    !
+    if (keyboard_input == -1) then
+       ! FB decide whether to ovwerwrite initialization with data from external file
+       print*,"Do you want to overwrite simulation parameters with data from an external file?"
+       print*,"  - enter 999 to keep simulation parameters from ROOT.def and run_def/input.txt"
+       print*,"  - or enter number of runpath (max 3 digits, run_DDD.txt) to overwrite definition from ROOT.def"
+       read (*,*) keyboard_input
+    end if
+
+! define input.txt formats
 110 format (f9.0)
 111 format (i9)
 112 format (a8)
 113 format (E10.0)
 
+    select case (keyboard_input)
+    case(999) ! default
+       runpath = "run_def"
+    case DEFAULT ! FB
+       write(runpath,"(A4,I0.3)") "run_",keyboard_input
+    end select
 '''
 
         self.read_aer = '''        
     ! partitioning (required)
-    write(*,*) "using parameters from ", "input_partitioning.txt"
-    open (unit=15, file="input_partitioning.txt", status='old',    &
-         access="sequential", form="formatted", action="read")
+    write(*,*) "using parameters from ", runpath//"/input_partitioning.txt"
+    open (unit=15, file=runpath//"/input_partition.txt", status='old',    &
+         access="sequential", form="formatted", action="read" )
 
     ! read in defaults defined in input.txt
     read (15, 113)  cAER0_total
+    read (15, 111)  integratorcheck
     read (15, 111)  partition_substeps !0=no partitioning
     
     close(15)
     ! echo
-    write(*,*) "read from file: ", "input_partitioning.txt"
+    write(*,*) "read from file: ", runpath//"/input_partitioning.txt"
     write(*,*) "read in values: ", &
          "total initial CAER [g/m3]: ", cAER0_total, &
-         "partition_substeps: ", partition_substeps
+         "partition_substeps: ", partition_substeps, &
+         "integratorcheck: ", integratorcheck 
 '''
         self.read_optional = '''
     ! overwrite time (optional) (tested)
-    inquire(file="input_time.txt", exist=existp)
+    inquire(file=runpath//"/input_time.txt", exist=existp)
     if (existp) then
-       open (unit=15, file="input_time.txt", status='old',    &
-             access="sequential", form="formatted", action="read")
+       open (unit=15, file=runpath//"/input_time.txt", status='old',    &
+             access="sequential", form="formatted", action="read" )
 
        read (15, 110)  TSTART
        read (15, 110)  DURATION
@@ -80,7 +105,7 @@ class InitModify:
 
        TEND = TSTART + DURATION
 
-       write(*,*) "read from file: ", "input_time.txt"
+       write(*,*) "read from file: ", runpath//"/input_time.txt"
        write(*,*) "read in: ", &
             "TSTART: ", TSTART, &
             "DURATION: ", DURATION, &
@@ -88,10 +113,10 @@ class InitModify:
     endif
         
     ! overwrite initial concentrations (optional) (untested)
-    inquire(file="cgas_init.txt", exist=existp)
+    inquire(file=runpath//"/cgas_init.txt", exist=existp)
     if (existp) then
-       open (unit=15, file="cgas_init.txt", status='old',    &
-             access="sequential", form="formatted", action="read")
+       open (unit=15, file=runpath//"/cgas_init.txt", status='old',    &
+             access="sequential", form="formatted", action="read" )
        x = (1e-5)*CFACTOR
        do
           read (15, *, iostat=filestat)  idx, conc ! CHECK PRECISION
@@ -102,7 +127,7 @@ class InitModify:
 
        TEND = TSTART + DURATION
 
-       write(*,*) "read from file: ", "input_time.txt"
+       write(*,*) "read from file: ", runpath//"/input_time.txt"
        write(*,*) "read in: ", &
             "TSTART: ", TSTART, &
             "DURATION: ", DURATION, &
@@ -110,10 +135,10 @@ class InitModify:
     endif
 
     ! overwrite temperature (optional) (untested)
-    inquire(file="input_temp.txt", exist=existp)
+    inquire(file=runpath//"/input_temp.txt", exist=existp)
     if (existp) then
-       open (unit=15, file="input_temp.txt", status='old',    &
-             access="sequential", form="formatted", action="read")
+       open (unit=15, file=runpath//"/input_temp.txt", status='old',    &
+             access="sequential", form="formatted", action="read" )
 
        read (15, 110)  TEMP
        read (15, 110)  CFACTOR_NEW ! make sure double precision?
@@ -131,7 +156,7 @@ class InitModify:
           FIX(i) = FIX(i)*CFACTOR_RATIO
        END DO
 
-       write(*,*) "read from file: ", "input_temp.txt"
+       write(*,*) "read from file: ", runpath//"/input_temp.txt"
        write(*,*) "read in: ", &
             "CFACTOR: ", TSTART, &
             "DURATION: ", DURATION, &
@@ -140,9 +165,8 @@ class InitModify:
     ! End overwriting initialization FB/ST
 '''.format(ROOT=self.root)
 
-    def modify(self,mode):
-        modeTF = {'gas':False,'total':True}
-        mode = modeTF[mode]
+    def modify(self),mode:
+        mode = True if mode=='total' else False
         filename = self.root+'_Initialize.f90'
         newfile = filename + '~'
         with open(newfile,'w') as fout:
@@ -172,5 +196,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
     root, mode = args.root, args.mode
     ## root = 'octane_gen'
-    mainfile = InitModify(root)
-    mainfile.modify(mode)
+    mainfile = InitModify(root, mode)
+    mainfile.modify()

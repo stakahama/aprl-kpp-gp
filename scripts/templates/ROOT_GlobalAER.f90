@@ -1,4 +1,4 @@
-module {ROOT}_GlobalAER
+  module {ROOT}_GlobalAER
 
   use {ROOT}_Parameters, only: dp, NSPEC
   public
@@ -10,30 +10,27 @@ module {ROOT}_GlobalAER
   real(kind=dp) :: CAER(NSPEC)
   real(kind=dp) :: VPAER(NSPEC)
 
-! variables initialized by {ROOT}_Initialize.f90
-  integer :: keyboard_input             !FB: command-line-argument or keyboard input defining the number of the input file in the folder in_outputs
-  character(len=7):: runpath         !FB: name of the input file in the folder in_outputs
-  character(len=8) :: integrator        !FB: integrator type 'forward' or 'backward', global variable to be able to read it from a file when initializing
-  integer :: partition_substeps
-  real(kind=dp) :: cAER0_total !FB: initial total amount of aerosol present (default: 313E11 (NSPEC*E11), can be overwritten by input textfile)
+  ! variables initialized by {ROOT}_Initialize.f90
+  integer             :: partition_substeps !FB
+  real(kind=dp)       :: cAER0_total        !FB: initial total amount of aerosol present (default: 313E11 (NSPEC*E11), can be overwritten by input textfile)
 
-! variables initialized by {ROOT}_InitializeAER.f90
+  ! variables initialized by {ROOT}_InitializeAER.f90
   ! FIXED PARAMETERS (contain all the species, including anorganics)
   real(kind=dp) :: nr_aerosol_particles, d_ve_aerosols !FB
-  real(kind=dp) :: Diff_coeff(NSPEC) !FB
-  real(kind=dp) :: f_a_Kn ! FB: func(alpha, Knudsen-number)
+  real(kind=dp) :: Diff_coeff(NSPEC)                   !FB
+  real(kind=dp) :: f_a_Kn                              ! FB: func(alpha, Knudsen-number)
 
   ! Define special variables to keep dlsode easy and organised (they contain only the organic species, unlike the fixed parameters above)
   real(kind=dp), dimension(:), allocatable :: Cstar ! FB: VPAER but only containing organic species, will be used by DLSODE f-function
   real(kind=dp), dimension(:), allocatable :: gamma ! FB: factor for partitioning of organic species, will be used by DLSODE f-function
-  
-    ! read in with read_in_subset_of_organics(), defined by org_indices.f90 and org_molecular_masses.f90
-      integer :: NorganicSPEC !FB ! TODO: define whether this is needed after all (not if I'm only looping over the binary vector, and by defining CAER_total)
-      integer, dimension(:), allocatable :: organic_selection_indices  !FB: defines indices of organic compounds in "C0", "M0", etc.
-      integer :: organic_selection_binary(NSPEC)  !FB: defines (binary: 0 or 1) whether the compounds in "C0", "M0", etc. are organic and need to be modelled into the aerosol phase
-      real(kind=dp) :: molecular_masses(NSPEC)  !FB: molecular masses of organic compounds, (inorganic will have 0), to convert initial amount of aerosl from µg/m3 to molecules/cm3
 
-! variables used by {ROOT}_PartitionAER.f90
+  ! read in with read_in_subset_of_organics(), defined by org_indices.f90 and org_molecular_masses.f90
+  integer             :: NorganicSPEC                              !FB ! TODO: define whether this is needed after all (not if I'm only looping over the binary vector, and by defining CAER_total)
+  integer, dimension(:), allocatable :: organic_selection_indices  !FB: defines indices of organic compounds in "C0", "M0", etc.
+  integer             :: organic_selection_binary(NSPEC)           !FB: defines (binary: 0 or 1) whether the compounds in "C0", "M0", etc. are organic and need to be modelled into the aerosol phase
+  real(kind=dp)       :: molecular_masses(NSPEC)                   !FB: molecular masses of organic compounds, (inorganic will have 0), to convert initial amount of aerosl from µg/m3 to molecules/cm3
+
+  ! variables used by {ROOT}_PartitionAER.f90
   integer :: displayed_not_enough_CAER(NSPEC)   !FB: flag to count how many times the error message on not enough CAER has already been shown for the given MCM_timestep
   integer :: displayed_not_enough_CGAS(NSPEC)   !FB: flag to count how many times the error message on not enough CAER has already been shown for the given MCM_timestep
 
