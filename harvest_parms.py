@@ -88,8 +88,22 @@ for runpath in runs:
     augmented = OrderedDict()
 
     with open(os.path.join(runpath,'photolysis.txt')) as f:
-        lightmode = f.readline().strip()
+        lightmode = f.readline().strip().replace('#','')
     augmented.update({'LIGHTMODE':lightmode})
+
+    fname = os.path.join(runpath,'molefrac_init.txt')
+    if os.path.exists(fname):
+        with open(fname) as f:
+            molefrac_label = f.readline().strip().replace('#','')
+        augmented.update({'MOLEFRAC_INIT':molefrac_label})
+
+    fname = os.path.join(runpath,'cgas_init.def')
+    if os.path.exists(fname):
+        pairs = []
+        with open(fname) as f:
+            for line in f:
+                pairs += expr2pair(line)
+        augmented.update(pairs)
 
     for inp in input_files.keys():
         fname = os.path.join(runpath,inp)

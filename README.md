@@ -82,13 +82,21 @@ Simulations:
 		{M0}
 		{PARTITION_SUBSTEPS}
 
-- molefrac\_init.txt: `IND` is the organic compound index and `a0` is the initial mole fraction
+- molefrac\_init.txt: `IND` is the organic compound index and `a0` is the initial mole fraction; the first line is a label (for "harvest_parms.py") preceded by `#`
 
+                {#COMMENT}
 		{IND1} {a0(1)}
 		{IND2} {a0(2)}
 
 
 ## Instructions
+
+There are four main executable python scripts. The first should be run in the compound folder, and the rest in the simulation folder.
+
+* search\_struct.py: generates SIMPOL and FTIR group tables; also property tables
+* build\_dual.py: construct MCM/KPP executables for gas and aerosol simulations
+* execute\_dual.py: run executables for a given folder of input parameters ("runpath")
+* harvest\_parms.py: harvest parameters from one or more runpath folders
 
 Add kppaermod/ to the list of paths in which executable are searched:
 
@@ -108,7 +116,6 @@ $ export PATH=~/git/projects/aprl-structsearch:$PATH
 ```
 
 I have created a script, search_struct.py, in kppaermod to facilitate generation of SIMPOL and FTIR groups, and also the vapor pressures at 298.15K and 358.15K (60 degrees C) using the aprl-structsearch program.
-
 
 Command:
 ```
@@ -214,6 +221,3 @@ Outputs (in working directory):
 
 * parameter_table.csv
 
-Notes:
-
-* Currently does not try to read in "cgas\_init.txt" or "molefrac\_init.txt".
