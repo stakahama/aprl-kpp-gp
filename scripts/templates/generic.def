@@ -1,0 +1,21 @@
+#LANGUAGE Fortran90
+#INTEGRATOR kpp_lsode
+#DRIVER general
+
+#include atoms
+#include inorganic.kpp
+#include {ROOT}.kpp
+
+#INLINE F90_INIT
+   TSTART = 0.
+   TEND = 24 * 3600.
+   DT = 1.
+   TEMP = 298.
+#ENDINLINE
+
+#MONITOR O3; {ROOT};
+#LOOKATALL
+
+#INITVALUES
+   CFACTOR = 2.38d10
+   ALL_SPEC = 1d-5

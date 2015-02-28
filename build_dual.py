@@ -48,17 +48,16 @@ args = dict(vars(parser.parse_args()))
 
 ###_* -------------------- define and create paths --------------------
 
-
 args['MAINPATH'] = os.path.dirname(__file__)
+HERE = os.getcwd()
+paths = {p: os.path.join(HERE,'exec_'+p)  for p in ['gas','total']}
+template = os.path.join(HERE,'kppbuild')
 
 ## modify environment PATH
 env = os.environ.copy()
 env['PATH'] = '{}:{}'.format(os.path.join(args['MAINPATH'],'scripts'),env['PATH'])
 
-HERE = os.getcwd()
-paths = {p: os.path.join(HERE,'exec_'+p)  for p in ['gas','total']}
-template = os.path.join(HERE,'kppbuild')
-
+## prepare directories
 for p in paths.values():
     if os.path.exists(p):
         shutil.rmtree(p)
@@ -69,14 +68,25 @@ if not (args['skipbuild'] or args['onlygas'] or args['onlytotal']):
     if os.path.exists(template):
         shutil.rmtree(template)
 
+###_* -------------------- build def file -------------------
+
+    deffile = '{ROOT}.def'.format(**args)
+    
+    with open(os.path.join(HERE,deffile)) as fout:
+        with open(os.path.join(args['MAINPATH'],'scripts','templates','generic.def')) as finp:
+            fout.write(finp.read().format(**args))
+
 ###_* -------------------- create symlinks for common inputs -------------------
 
     ## runs
     # runpaths = glob.glob('run_*')
 
     ## compounds
-    compoundfiles = map(os.path.basename,glob.glob(args['CPATH']+'/*'))
-    subprocess.call('cp -pv {}/* .'.format(args['CPATH']), shell=True)
+    compounds = []
+    for f in os.listdir(args['CPATH']):
+        if f!=deffile:
+            compoundfiles.append(f)
+            shutil.copy2(os.path.join(args['CPATH'],f),'.')
 
     os.mkdir(template)
     for f in compoundfiles:
