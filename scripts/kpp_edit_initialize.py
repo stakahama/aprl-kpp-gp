@@ -30,7 +30,7 @@ class InitModify:
     REAL(kind=dp)      :: DURATION            ! FB
     REAL(kind=dp)      :: CFACTOR_NEW=1.D0    ! ST
     REAL(kind=dp)      :: CFACTOR_RATIO=1.D0  ! ST
-    integer            :: idx                 ! ST
+    integer            :: ix                  ! ST
     REAL(kind=dp)      :: conc                ! ST    
 '''
 
@@ -96,12 +96,12 @@ class InitModify:
        open (unit=15, file="cgas_init.txt", status='old',    &
              access="sequential", form="formatted", action="read")
        do
-          read (15, *, iostat=filestat)  idx, conc ! CHECK PRECISION
+          read (15, *, iostat=filestat)  ix, conc ! CHECK PRECISION
           if (filestat /= 0) exit
-          if (idx .eq. 0) then
+          if (ix .eq. 0) then
              H2O = conc
           else       
-             VAR(idx) = conc*CFACTOR
+             VAR(ix) = conc*CFACTOR
           endif
        end do
        close(15)

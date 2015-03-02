@@ -60,16 +60,20 @@ contains
 !   Parameters :                                                  
 !
 ! ****************************************************************
-
+  
   SUBROUTINE CloseSaveDataAER ()
-! modules
-!!$      USE {ROOT}_Parameters
-! body
-      CLOSE(fileidAER)
-! INTEGRATOR DIAGNOSTICS
-      CLOSE(86)
-      CLOSE(87)
-      CLOSE(88)
+    ! modules
+    USE {ROOT}_GlobalAER
+    ! body
+    CLOSE(fileidAER)
+    CLOSE(86)       ! INTEGRATOR DIAGNOSTICS
+    !
+    DEALLOCATE(CSTAR)
+    DEALLOCATE(GAMMA)
+    DEALLOCATE(ORGANIC_SELECTION_INDICES)
+    DEALLOCATE(RWORK)
+    DEALLOCATE(IWORK)      
+    DEALLOCATE(Y)
 
     END SUBROUTINE CloseSaveDataAER
 

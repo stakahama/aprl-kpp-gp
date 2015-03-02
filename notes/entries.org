@@ -17,7 +17,9 @@ default was input_file="std-def," now runpath="run_def"
 
 extra/process.py renamed to extra/format_output.py. now renames in place (removed os.path.basename call)
 
-
 * <2015-02-27 Fri>
 
 Major modification to modify initial gas-phase concentrations, time, and temperature/CFACTOR after building .exe.
+* <2015-03-02 Mon>
+
+INITVALUES needs to use 1E10 notation (not 1D10)!

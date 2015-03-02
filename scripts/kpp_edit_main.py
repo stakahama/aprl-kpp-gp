@@ -51,7 +51,9 @@ class MainDriver:
                         accum += addstatement('CALL SaveDataAER()',8)
                         next
                     elif 'END DO kron' in line:
-                        accum += addstatement('CALL PARTITION(DT, partition_substeps)',8)+'\n'
+                        accum += addstatement('IF (PARTITION_SUBSTEPS > 0) THEN',8)
+                        accum += addstatement('CALL PARTITION(T,TNEXT)',10)
+                        accum += addstatement('ENDIF',8)
                         accum += line
                         break
                     accum += line
