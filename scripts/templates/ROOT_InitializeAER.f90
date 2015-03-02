@@ -12,7 +12,7 @@ contains
     use {ROOT}_Global, only : TEMP, CFACTOR, CGAS => C, TSTART
     use {ROOT}_GlobalAER, only : CAER, VPAER, molecular_masses, &
          NorganicSPEC, cAER0_total, &
-         Cstar, gamma, organic_selection_indices, &
+         Cstar, gammaf, organic_selection_indices, &
          ! DLSODE
          iopt, istate, itask, itol, liw, lrw, mf, neq, ml, mu, &
          atol, rtol, rwork, y, iwork
@@ -22,7 +22,7 @@ contains
 
     ! local variables
     logical                     :: existp
-    integer                     :: i, ix    
+    integer                     :: i, ix, iOrg
     !
     real(kind=dp)               :: alpha, lambda, Kn
     real(kind = dp), parameter  :: pi = 4_dp * atan(1.0_dp)
@@ -82,9 +82,24 @@ contains
     itask = 1                  ! Flag indicating the task DLSODE is to perform. Use ITASK = 1 for normal computation of output values of y at t = TOUT.
     istate = 1                 ! Index used for input and output to specify the state of the calculation.
     iopt = 0                   ! Flag indicating whether optional inputs are used (0: no, 1: yes)
-    lrw = 22 + 9*neq + neq*neq ! Declared length of RWORK
-    liw = 20 + neq             ! Declared length of IWORK
-    mf = 21                    ! defines the use of a dense Jacobian
+!!$    mf = 10
+    mf = 21
+!!$    mf = 22
+    !
+    select case (mf)
+    case (10)                     ! Nonstiff
+       lrw = 20+16*neq            ! Declared length of RWORK
+       liw = 20                   ! Declared length of IWORK
+       !
+    case (21)                     ! User-supplied dense Jacobian
+       lrw = 22 + 9*neq + neq*neq ! Declared length of RWORK
+       liw = 20 + neq             ! Declared length of IWORK
+       ! 
+    case (22)                     ! Internally generated Jacobian
+       lrw = 22 + 9*neq + neq*neq ! Declared length of RWORK
+       liw = 20 + neq             ! Declared length of IWORK
+    end select
+    !
     allocate(rwork(lrw))       ! Real work array of length at least:    22 +  9*NEQ + NEQ**2     for MF = 21 or 22
     allocate(iwork(liw))       ! Integer work array of length at least: 20 + NEQ                 for MF = 21, 22, 24, or 25.
     allocate(y(neq))
@@ -95,7 +110,7 @@ contains
     inquire(file="molefrac_init.txt", exist=existp)
     if (existp) then 
        open(55,file="molefrac_init.txt", status="old")
-       read(55,*) !header/comment line
+       read(55,*) !header/comment line (skip)
        do i = 1,NorganicSPEC
           read(55,*) ix, molefrac
           a0(ix) = molefrac
@@ -104,6 +119,7 @@ contains
     else
        a0 = 1.d0
     endif
+    a0 = a0/sum(a0) ! ensure mole fractions == 1
     ! ------------------------------------------------------------
 
     ! ------------------------------------------------------------    
@@ -122,10 +138,11 @@ contains
     
     ! -------------------- prepare variables for integration (uses only the organic subset) --------------------
     allocate(Cstar(NorganicSPEC))
-    allocate(gamma(NorganicSPEC))
+    allocate(gammaf(NorganicSPEC))
     do i=1,NorganicSPEC
-       Cstar(i) = VPAER(organic_selection_indices(i))
-       gamma(i) = -2.d0*pi*nr_aerosol_particles*d_ve_aerosols*f_a_Kn*Diff_coeff(organic_selection_indices(i));
+       iOrg = organic_selection_indices(i)
+       Cstar(i) = VPAER(iOrg)
+       gammaf(i) = -2.d0*pi*nr_aerosol_particles*d_ve_aerosols*f_a_Kn*Diff_coeff(iOrg);
     end do
     ! ------------------------------------------------------------    
 

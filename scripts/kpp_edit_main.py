@@ -20,8 +20,8 @@ class MainDriver:
         self.root = root
         self.importmod = '''  USE {ROOT}_Partition, ONLY: PARTITION !ST
   USE {ROOT}_InitializeAER, ONLY: InitializeAER                     !ST
-  USE {ROOT}_UtilAER                                                ! ST
-  use {ROOT}_GlobalAER, only: partition_substeps                    ! FB  
+  USE {ROOT}_UtilAER                                                !ST
+  use {ROOT}_GlobalAER, only: partition_on
 '''.format(ROOT=self.root)
 
     def modify(self):
@@ -51,9 +51,10 @@ class MainDriver:
                         accum += addstatement('CALL SaveDataAER()',8)
                         next
                     elif 'END DO kron' in line:
-                        accum += addstatement('IF (PARTITION_SUBSTEPS > 0) THEN',8)
+                        accum += addstatement('IF (PARTITION_ON > 0) THEN',8)
                         accum += addstatement('TNEXT=T+DT',10)
                         accum += addstatement('CALL PARTITION(T,TNEXT)',10)
+                        accum += addstatement('T=TNEXT',10)                        
                         accum += addstatement('ENDIF',8)
                         accum += line
                         break

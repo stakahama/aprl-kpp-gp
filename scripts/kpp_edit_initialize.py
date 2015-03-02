@@ -24,6 +24,11 @@ class InitModify:
     def __init__(self,root):
         self.root = root
 
+        self.module_aer = '''
+    USE apinene_GlobalAER, only: cAER0_total, &
+         integratorcheck, partition_on, minconc
+'''
+        
         self.declaration = '''
     integer            :: filestat            ! ST
     logical            :: existp              ! ST
@@ -34,11 +39,6 @@ class InitModify:
     REAL(kind=dp)      :: conc                ! ST    
 '''
 
-        self.declaration_aer = '''
-    USE apinene_GlobalAER, only: partition_substeps, cAER0_total, &
-         integratorcheck           ! FB    
-'''        
-        
         self.define_inputs = '''
         
 ! define input.txt formats for inputs
@@ -49,27 +49,36 @@ class InitModify:
 
 '''
 
+        self.minconc_aer = '''
+    minconc = 1.0D-15*CFACTOR
+'''
+
         self.read_aer = '''        
     ! partitioning (required)
     write(*,*) "using parameters from ", "input_partitioning.txt"
-    open (unit=15, file="input_partitioning.txt", status='old',    &
+    open (unit=15, file="input_partitioning.txt", status="old",    &
          access="sequential", form="formatted", action="read")
 
     ! read in defaults defined in input.txt
     read (15, 113)  cAER0_total
-    read (15, 111)  partition_substeps !0=no partitioning
+    read (15, 111)  partition_on    !0=off; 1=on    
     read (15, 111)  integratorcheck    !0=off; 1=on
+    read (15, 113)  minconc 
     
     close(15)
     ! echo
     write(*,*) "read from file: ", "input_partitioning.txt"
     write(*,*) "read in values: ", &
          "total initial CAER [g/m3]: ", cAER0_total, &
-         "partition_substeps: ", partition_substeps, &
-         "integratorcheck: ", integratorcheck
+         "partition_on: ", partition_on, &
+         "integratorcheck: ", integratorcheck, &
+         "minconc: : ", minconc
+
+
+    minconc = minconc*CFACTOR         
 '''
         self.read_optional = '''
-    ! overwrite time (optional) (tested)
+    ! overwrite time (optional)
     inquire(file="input_time.txt", exist=existp)
     if (existp) then
        open (unit=15, file="input_time.txt", status='old',    &
@@ -90,10 +99,10 @@ class InitModify:
             "DT: ", DT 
     endif
         
-    ! overwrite initial concentrations (optional) (untested)
+    ! overwrite initial concentrations
     inquire(file="cgas_init.txt", exist=existp)
     if (existp) then
-       open (unit=15, file="cgas_init.txt", status='old',    &
+       open (unit=15, file="cgas_init.txt", status="old",    &
              access="sequential", form="formatted", action="read")
        do
           read (15, *, iostat=filestat)  ix, conc ! CHECK PRECISION
@@ -112,7 +121,7 @@ class InitModify:
     ! overwrite temperature (optional) (untested)
     inquire(file="input_temp.txt", exist=existp)
     if (existp) then
-       open (unit=15, file="input_temp.txt", status='old',    &
+       open (unit=15, file="input_temp.txt", status="old",    &
              access="sequential", form="formatted", action="read")
 
        read (15, 110)  TEMP
@@ -130,6 +139,8 @@ class InitModify:
        DO i = 1, NFIX
           FIX(i) = FIX(i)*CFACTOR_RATIO
        END DO
+
+       minconc = minconc*CFACTOR_RATIO
 
        write(*,*) "read from file: ", "input_temp.txt"
        write(*,*) "read in: ", &
@@ -151,7 +162,7 @@ class InitModify:
                     fout.write(line)
                     if 'USE' in line and '_Util' in line:
                         if mode:
-                            fout.write(self.declaration_aer)
+                            fout.write(self.module_aer)
                         fout.write(self.declaration)
                         break
                 ## overwrite INLINED initializations (i.e. leave them in the code but overwrite their result just after)
@@ -160,6 +171,7 @@ class InitModify:
                     if 'End INLINED initializations' in line:
                         fout.write(self.define_inputs)
                         if mode:
+                            fout.write(self.minconc_aer)
                             fout.write(self.read_aer)
                         fout.write(self.read_optional)
                         fout.write('\n')
