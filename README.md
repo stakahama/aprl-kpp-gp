@@ -60,7 +60,7 @@ Mechanism information:
 Simulations:
 
 - photolysis.txt: input for kpp_constants.f90
-- input\_time.txt: time in units of seconds.
+- input\_time.txt: time in units of seconds. Note that when partitioning is turned on, the operators are coupled as S1(DT)oS2(DT) so 2*DT is a full timestep for gas-phase chemistry + partitioning.
 
 		{TSTART}
 		{DURATION}
@@ -77,12 +77,13 @@ Simulations:
 		{COMPOUND1} = {PPB2}
 		...
 
-- input\_partitioning.txt: `M0` is the initial aerosol concentration; `PARTITION\_ON` is 1 (or 0 for no partitioning); `INTEGRATORCHECK` determines whether additional diagnostics are run (0=off, 1=on); `MINCONC` is the value (in ppb) at which minimum concentrations in gas and aerosol phases are maintained.
+- input\_partitioning.txt: `M0` is the initial aerosol concentration; `PARTITION\_ON` is 1 (or 0 for no partitioning); `INTEGRATORCHECK` determines whether additional diagnostics are run (0=off, 1=on); `MINCONC` is the value (in ppb) at which minimum concentrations in gas and aerosol phases are maintained; `MF` is a DLSODE option which controls the integration (10=Nonstiff, no Jacobian required; 21=User-supplies Jacobian-generating function (default); 22=Jacobian is internally generated)
 
 		{M0}
 		{PARTITION_ON}
 		{INTEGRATORCHECK}
                 {MINCONC}
+                {MF}
 
 - molefrac\_init.txt: `IND` is the organic compound index and `a0` is the initial mole fraction; the first line is a label (for "harvest_parms.py") preceded by `#`
 

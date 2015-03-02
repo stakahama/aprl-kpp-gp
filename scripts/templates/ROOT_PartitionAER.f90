@@ -86,18 +86,18 @@ contains
     do i=1,NorganicSPEC
        iAER = i+NorganicSPEC
        iOrg = organic_selection_indices(i)
-!!$       y(i) = max(CGAS_old(iOrg),minconc)
-!!$       y(iAER) = max(CAER_old(iOrg),minconc)
-       y(i) = CGAS_old(iOrg)
-       y(iAER) = CAER_old(iOrg)
+       y(i) = max(CGAS_old(iOrg),minconc)     ! this stabilizes the solution 
+       y(iAER) = max(CAER_old(iOrg),minconc)  ! this stabilizes the solution 
+!!$       y(i) = CGAS_old(iOrg)
+!!$       y(iAER) = CAER_old(iOrg)
     end do
     !
     ! integrate
-!!$    if (mf .eq. 21) then
-    call dlsode(f1,neq,y,t,tout,itol,rtol,atol,itask,istate,iopt,rwork,lrw,iwork,liw,jac1,mf)
-!!$    else
-!!$       call dlsode(f1,neq,y,t,tout,itol,rtol,atol,itask,istate,iopt,rwork,lrw,iwork,liw,dummy,mf)
-!!$    endif
+    if (mf .eq. 21) then
+       call dlsode(f1,neq,y,t,tout,itol,rtol,atol,itask,istate,iopt,rwork,lrw,iwork,liw,jac1,mf)
+    else
+       call dlsode(f1,neq,y,t,tout,itol,rtol,atol,itask,istate,iopt,rwork,lrw,iwork,liw,dummy,mf)
+    endif
     write(*,*) "ISTATE=", istate
     ! ------------------------------------------------------------
 

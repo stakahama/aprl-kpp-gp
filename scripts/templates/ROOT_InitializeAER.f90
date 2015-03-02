@@ -81,10 +81,10 @@ contains
     istate = 1                 ! Index used for input and output to specify the state of the calculation.
     iopt = 0                   ! Flag indicating whether optional inputs are used (0: no, 1: yes)
 !!$    mf = 10
-    mf = 21
+!!$    mf = 21
 !!$    mf = 22
     !
-    select case (mf)
+    select case (mf)              ! Read in from {ROOT}_Initialize.f90
     case (10)                     ! Nonstiff
        lrw = 20+16*neq            ! Declared length of RWORK
        liw = 20                   ! Declared length of IWORK
