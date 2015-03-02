@@ -57,14 +57,14 @@ contains
          atol, rtol, rwork, y, iwork
     use {ROOT}_monitor, only: SPC_NAMES ! FB: to plot the spc_names
     ! bound variables
-    real(kind=dp)                                 :: t, tout
-    real (kind=dp), dimension(NSPEC), intent(in)  :: CGAS_old, CAER_old
-    real (kind=dp), dimension(NSPEC), intent(out) :: CGAS_new, CAER_new
+    real(kind=dp)                                :: t, tout
+    real(kind=dp), dimension(NSPEC), intent(in)  :: CGAS_old, CAER_old
+    real(kind=dp), dimension(NSPEC), intent(out) :: CGAS_new, CAER_new
     ! local variables
     character(len=100):: ERROR_MSG                   ! ERROR message to print
 !!$    real (kind=dp) :: sum_organic_CAER_old, sum_organic_CAER_old_microg_m3, mean_molecular_mass_of_organics
     integer           :: i, iAER, iOrg
-    real (kind=dp)    :: minconc, change, dGAS, dAER ! needed for the check whether d CGAS/dt = -d CAER/dt for each compound
+    real(kind=dp)     :: minconc, change, dGAS, dAER ! needed for the check whether d CGAS/dt = -d CAER/dt for each compound
     ! LSODE PARAMETERS
     !external f1, jac1  ! NOTE (23.12.14): the declaration of f1 and jac1 seems not to be needed anymore in FORTRAN 90? (contradicting the DLSODE manual (lines 57 and 66 in opkdmain.f))
     ! ------------------------------------------------------------

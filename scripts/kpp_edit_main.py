@@ -52,6 +52,7 @@ class MainDriver:
                         next
                     elif 'END DO kron' in line:
                         accum += addstatement('IF (PARTITION_SUBSTEPS > 0) THEN',8)
+                        accum += addstatement('TNEXT=T+DT',10)
                         accum += addstatement('CALL PARTITION(T,TNEXT)',10)
                         accum += addstatement('ENDIF',8)
                         accum += line
