@@ -77,15 +77,16 @@ Simulations:
 		{COMPOUND1} = {PPB2}
 		...
 
-- input\_partitioning.txt: `M0` is the initial aerosol concentration; `PARTITION\_SUBSTEPS` is 1 (or 0 for no partitioning); `INTEGRATORCHECK` determines whether additional diagnostics are run (0=off, 1=on)
+- input\_partitioning.txt: `M0` is the initial aerosol concentration; `PARTITION\_ON` is 1 (or 0 for no partitioning); `INTEGRATORCHECK` determines whether additional diagnostics are run (0=off, 1=on); `MINCONC` is the value (in ppb) at which minimum concentrations in gas and aerosol phases are maintained.
 
 		{M0}
-		{PARTITION_SUBSTEPS}
+		{PARTITION_ON}
 		{INTEGRATORCHECK}
+                {MINCONC}
 
 - molefrac\_init.txt: `IND` is the organic compound index and `a0` is the initial mole fraction; the first line is a label (for "harvest_parms.py") preceded by `#`
 
-                {#COMMENT}
+		{#COMMENT}
 		{IND1} {a0(1)}
 		{IND2} {a0(2)}
 

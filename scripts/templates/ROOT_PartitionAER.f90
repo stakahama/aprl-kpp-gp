@@ -19,14 +19,17 @@ contains
   subroutine partition(t, tout)
 
     ! modules
-    use {ROOT}_Global, only: NSPEC, CGAS => C
-    use {ROOT}_GlobalAER, only: CAER
+    use {ROOT}_Parameters, only: NSPEC
+    use {ROOT}_Global, only: CGAS => C
+    use {ROOT}_GlobalAER, only: CAER, print_organic_aerosol_mass
 
     ! bound variables
     real(kind=dp), intent(in) :: t, tout
     
     ! local variables
-    real (kind=dp), dimension(NSPEC) :: CAER_new, CGAS_new
+    real(kind=dp), dimension(NSPEC) :: CAER_new, CGAS_new
+    
+    call print_organic_aerosol_mass()
 
     CGAS_new = CGAS;
     CAER_new = CAER;
@@ -48,7 +51,8 @@ contains
 
     ! -------------------- variables --------------------
     ! modules
-    use {ROOT}_Global, only: NSPEC, TIME, TEND, TSTART ! FB: to print the total TIME, TEND, and TSTART
+    use {ROOT}_Parameters, only: NSPEC
+    use {ROOT}_Global, only: TIME, TEND, TSTART ! FB: to print the total TIME, TEND, and TSTART
     use {ROOT}_GlobalAER, only: NorganicSPEC, &
          integratorcheck, &           ! FB: to be able to set integrator type from external file
          organic_selection_indices, & ! FB: only used for dlsode (creation of special vector y (only containing organics, like gammaf))
@@ -82,8 +86,10 @@ contains
     do i=1,NorganicSPEC
        iAER = i+NorganicSPEC
        iOrg = organic_selection_indices(i)
-       y(i) = max(CGAS_old(iOrg),minconc)
-       y(iAER) = max(CAER_old(iOrg),minconc)
+!!$       y(i) = max(CGAS_old(iOrg),minconc)
+!!$       y(iAER) = max(CAER_old(iOrg),minconc)
+       y(i) = CGAS_old(iOrg)
+       y(iAER) = CAER_old(iOrg)
     end do
     !
     ! integrate

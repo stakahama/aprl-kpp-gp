@@ -13,6 +13,7 @@ contains
     use {ROOT}_GlobalAER, only : CAER, VPAER, molecular_masses, &
          NorganicSPEC, cAER0_total, &
          Cstar, gammaf, organic_selection_indices, &
+         pi_constant, Avogadro, &
          ! DLSODE
          iopt, istate, itask, itol, liw, lrw, mf, neq, ml, mu, &
          atol, rtol, rwork, y, iwork
@@ -25,8 +26,6 @@ contains
     integer                     :: i, ix, iOrg
     !
     real(kind=dp)               :: alpha, lambda, Kn
-    real(kind = dp), parameter  :: pi = 4_dp * atan(1.0_dp)
-    real(kind = dp), parameter  :: Avogadro = 6.02214129E+23_dp ! [molecules/mol]
     real(kind=dp)               :: nr_aerosol_particles, d_ve_aerosols !FB
     real(kind=dp)               :: Diff_coeff(NSPEC)                   !FB
     real(kind=dp)               :: f_a_Kn                              ! FB: func(alpha, Knudsen-number)
@@ -53,10 +52,9 @@ contains
     do i=1,NSPEC
        abundance = substruct_count(i)
        if (any(abundance(2:) .gt. 0.)) then
-          vp_atm = simpolvp(TEMP, abundance)
-          VPAER(i) = press2conc(TEMP, vp_atm) ! molecules/cm^3
+          VPAER(i) = simpolvp(TEMP, abundance) ! [atm]
        else
-          VPAER(i) = 10.d12 ! no match; arbitrarily high number!-999.d0
+          VPAER(i) = 10.d0                     ! no match; arbitrarily high number
        end if
     end do
     ! ------------------------------------------------------------
@@ -132,7 +130,7 @@ contains
     mean_molecular_mass_of_organics = sum(a0*molecular_masses) ! [g/mol] to convert amount of initial total aerosol correctly from [g/m3] to [molecules/m3]
     write(*,*) "a0 weighted mean of molecular mass to transform I.C from microgram/m3 to molecules/cm3: ", &
          mean_molecular_mass_of_organics
-    CAER_total_in_molecules_per_cm3 = CAER_total_in_g_per_m3/(1000000_dp*mean_molecular_mass_of_organics/Avogadro) ! [molecules/m3] = 100^3[cm3/m3][g/m3]/[g/molecule]
+    CAER_total_in_molecules_per_cm3 = CAER_total_in_g_per_m3/(1000000_dp*mean_molecular_mass_of_organics)*Avogadro ! [molecules/cm3] = [g/m3]*[100^-3,m3/cm3][g/mole]^-1[molec/mole]
     CAER = CAER_total_in_molecules_per_cm3*a0    ! [molecules/cm3]
     ! ------------------------------------------------------------
     
@@ -141,8 +139,8 @@ contains
     allocate(gammaf(NorganicSPEC))
     do i=1,NorganicSPEC
        iOrg = organic_selection_indices(i)
-       Cstar(i) = VPAER(iOrg)
-       gammaf(i) = -2.d0*pi*nr_aerosol_particles*d_ve_aerosols*f_a_Kn*Diff_coeff(iOrg);
+       Cstar(i) = press2conc(TEMP,VPAER(iOrg)) ! [molec/cm^3]
+       gammaf(i) = -2.d0*pi_constant*nr_aerosol_particles*d_ve_aerosols*f_a_Kn*Diff_coeff(iOrg);
     end do
     ! ------------------------------------------------------------    
 

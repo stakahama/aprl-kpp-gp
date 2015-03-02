@@ -22,6 +22,10 @@
   integer, dimension(:), allocatable :: organic_selection_indices  !FB: defines indices of organic compounds in "C0", "M0", etc.
   real(kind=dp), dimension(NSPEC)    :: molecular_masses           !FB: molecular masses of organic compounds, (inorganic will have 0), to convert initial amount of aerosl from µg/m3 to molecules/cm3
 
+  ! constants
+  real(kind = dp), parameter  :: pi_constant = 4_dp * atan(1.0_dp)
+  real(kind = dp), parameter  :: Avogadro = 6.02214129E+23_dp ! [molecules/mol]
+
   ! -------------------- DLSODE PARAMETERS --------------------    
   integer iopt, istate, itask, itol, liw, lrw, mf, neq, ml, mu
   double precision atol, rtol
@@ -30,4 +34,26 @@
   ! ------------------------------------------------------------
 
   real(kind=dp)                      :: minconc
+
+contains
+
+  subroutine print_organic_aerosol_mass()
+  
+    real(kind=dp) :: sum_aer, sum_prod, mean_molec_mass, sum_aer_microg_m3
+    integer :: ix, iOrg
+
+    sum_aer = 0
+    sum_prod = 0
+    do ix = 1, NorganicSPEC
+       iOrg = organic_selection_indices(ix)
+       sum_aer = sum_aer + CAER(iOrg)
+       sum_prod = sum_prod + (CAER(iOrg)*molecular_masses(iOrg))
+    end do
+    mean_molec_mass = sum_prod/sum_aer
+    sum_aer_microg_m3 =sum_aer*(1000000_dp*mean_molec_mass/Avogadro)
+    write(*,*) 'sum organic CAER  [molecules/cm3] :', sum_aer, &
+         'corresponds approx. to [microg/m3]: ', sum_aer_microg_m3
+
+  end subroutine print_organic_aerosol_mass
+
 end module {ROOT}_GlobalAER

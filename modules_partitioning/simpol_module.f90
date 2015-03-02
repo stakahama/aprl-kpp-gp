@@ -57,11 +57,11 @@ contains
 
   function press2conc(temp,press) result(conc)
 ! arguments
-    real(precision), intent(in) :: press, temp       ! atm, K
+    real(precision), intent(in) :: press, temp        ! atm, K
 ! local variables
-    real(precision) :: conc                          ! molecules/cm^3
-    real(precision), parameter :: Av = 6.0221413d+23 ! molecules/mole
-    real(precision), parameter :: R = 82.05746       ! cm^3 atm/ mole/ K
+    real(precision)             :: conc               ! molecules/cm^3
+    real(precision), parameter  :: Av = 6.0221413d+23 ! molecules/mole
+    real(precision), parameter  :: R = 82.05746       ! cm^3 atm/ mole/ K
 ! body
     conc = press/temp * Av/R
   end function press2conc
