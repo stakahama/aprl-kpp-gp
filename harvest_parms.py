@@ -29,7 +29,7 @@ mech = os.path.basename(HERE)
 input_files = {
     'input_time.txt':('TSTART','DURATION','DT'),
     'input_temp.txt':('TEMP','CFACTOR'),
-    'input_partitioning.txt':('M0','PARTITION_SUBSTEPS','INTEGRATORCHECK')
+    'input_partitioning.txt':('M0','PARTITION_ON','INTEGRATORCHECK','MINCONC','MF')
     }
 
 ###_* -------------------- define functions --------------------
