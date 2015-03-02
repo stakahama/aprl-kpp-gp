@@ -24,4 +24,4 @@ Major modification to modify initial gas-phase concentrations, time, and tempera
 
 INITVALUES needs to use 1E10 notation (not 1D10)!
 
-Added minconc: 1e-16 seems to work while 0 fails. Possible option to also check for negativity(?) in output of gas-phase/input of partitioning module currently commented out (in ROOT_PartitionAER.f90).
+Added minconc: 1e-10 seems to work while 0.0 fails; 1e-16 is still not extremely stable. Possible option to also check for negativity(?) in output of gas-phase/input of partitioning module currently commented out (in ROOT_PartitionAER.f90).

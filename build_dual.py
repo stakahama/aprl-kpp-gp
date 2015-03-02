@@ -58,9 +58,9 @@ env = os.environ.copy()
 env['PATH'] = '{}:{}'.format(os.path.join(args['MAINPATH'],'scripts'),env['PATH'])
 
 ## prepare directories
-for p in paths.values():
-    if os.path.exists(p):
-        shutil.rmtree(p)
+# for p in paths.values():
+#     if os.path.exists(p):
+#         shutil.rmtree(p)
 
 if not (args['skipbuild'] or args['onlygas'] or args['onlytotal']):
 
@@ -112,13 +112,14 @@ if not (args['skipbuild'] or args['onlygas'] or args['onlytotal']):
         subprocess.call('kpp_extract_indices.py {ROOT} mcm_{ROOT}_mass.txt 1'.format(**args), shell=True, env=env)
         shutil.move('compound_indices_table.csv',HERE)
 
-shutil.copytree(template,paths['gas'],True)
-shutil.copytree(template,paths['total'],True)
 
 ###_* -------------------- gasphase only --------------------
 
 # print '-------------------- building gas-phase --------------------'
 if not args['onlytotal']:
+    if os.path.exists(paths['gas']):
+        shutil.rmtree(paths['gas'])
+    shutil.copytree(template,paths['gas'],True)
     os.chdir(paths['gas'])
     subprocess.call('kpp_edit_initialize.py {ROOT} gas'.format(**args), shell=True, env=env)
     subprocess.call('kpp_edit_makefile_gasphase.py {ROOT}'.format(**args), shell=True, env=env)
@@ -128,6 +129,9 @@ if not args['onlytotal']:
 
 # print '-------------------- building total --------------------'
 if not args['onlygas']:
+    if os.path.exists(paths['total']):
+        shutil.rmtree(paths['total'])
+    shutil.copytree(template,paths['total'],True)
     os.chdir(paths['total'])
     subprocess.call('cp -pv {MAINPATH}/modules_partitioning/* .'.format(**args), shell=True)
     subprocess.call('kpp_edit_initialize.py {ROOT} total'.format(**args), shell=True, env=env)

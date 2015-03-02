@@ -28,6 +28,11 @@ class InitModify:
     USE apinene_GlobalAER, only: cAER0_total, &
          integratorcheck, partition_on, minconc, mf
 '''
+
+        self.declaration_gas = '''
+    REAL(kind=dp)      :: minconc             ! FB
+'''
+
         
         self.declaration = '''
     integer            :: filestat            ! ST
@@ -49,8 +54,8 @@ class InitModify:
 
 '''
 
-        self.minconc_aer = '''
-    minconc = 1.0D-15*CFACTOR
+        self.minconc = '''
+    minconc = 1.0D-5*CFACTOR
 '''
 
         self.read_aer = '''        
@@ -164,6 +169,8 @@ class InitModify:
                     if 'USE' in line and '_Util' in line:
                         if mode:
                             fout.write(self.module_aer)
+                        else:
+                            fout.write(self.declaration_gas)
                         fout.write(self.declaration)
                         break
                 ## overwrite INLINED initializations (i.e. leave them in the code but overwrite their result just after)
@@ -171,8 +178,8 @@ class InitModify:
                     fout.write(line)
                     if 'End INLINED initializations' in line:
                         fout.write(self.define_inputs)
+                        fout.write(self.minconc)                        
                         if mode:
-                            fout.write(self.minconc_aer)
                             fout.write(self.read_aer)
                         fout.write(self.read_optional)
                         fout.write('\n')
