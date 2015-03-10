@@ -7,10 +7,10 @@ import matplotlib.pyplot as plt
 from operator import mod
 import re
 import os
-import sys
+import argparse
 
 ###_* --- read in the file ---
-def Readfile(filename):
+def ReadDATfile(filename):
     def isfloatp(x):
         try:
             float(x)
@@ -40,11 +40,17 @@ def Readfile(filename):
                 data.append(dataline)                   # append another row from text to data
                 dataline = []                           # re-initialize dataline
                 i = 1                                   # re-initialize counter/index (this is actually not necessary in this case)
-    return pd.DataFrame(data,columns=header) # create data frame object
+    return pd.DataFrame(data,columns=header)            # create table (data frame object)
 
 
 ###_* --- define input file name ---
 
-filename = sys.argv[-1]
-results = Readfile(filename).drop_duplicates()
-results.to_csv(filename.replace('.dat','_formatted.csv'),index=False)
+if __name__=='__main__':
+
+    parser = argparse.ArgumentParser(description='format .dat file output of kpp-generated exe program')
+    parser.add_argument('filename',type=str)
+    args = parser.parse_args()
+    ##
+    filename = args.filename
+    results = ReadDATfile(filename).drop_duplicates()
+    results.to_csv(filename.replace('.dat','_formatted.csv'),index=False)

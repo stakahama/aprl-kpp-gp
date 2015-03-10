@@ -49,12 +49,10 @@ class MainDriver:
                     if 'CALL SaveData()' in line:
                         accum += line
                         accum += addstatement('CALL SaveDataAER()',8)
-                        next
+                        continue
                     elif 'END DO kron' in line:
                         accum += addstatement('IF (PARTITION_ON > 0) THEN',8)
-                        accum += addstatement('TNEXT=T+DT',10)
-                        accum += addstatement('CALL PARTITION(T,TNEXT)',10)
-                        accum += addstatement('T=TNEXT',10)                        
+                        accum += addstatement('CALL PARTITION(TIME,TNEXT)',10)
                         accum += addstatement('ENDIF',8)
                         accum += line
                         break

@@ -35,6 +35,8 @@ args = dict(vars(parser.parse_args()))
 
 ###_* -------------------- define paths --------------------
 
+a0filename = 'molefrac_init.txt'
+
 args['MAINPATH'] = os.path.dirname(__file__)
 HERE = os.getcwd()
 paths = OrderedDict([(p, os.path.join(HERE,'exec_'+p))  for p in ['gas','total']])
@@ -66,7 +68,7 @@ if not os.path.exists(runpath['OUT']):
     os.mkdir(runpath['OUT'])
 
 resultsfile = os.path.join(runpath['INP'],'gas/{ROOT}_formatted.csv'.format(**args))
-a0file = os.path.join(runpath['OUT'],'a0.txt')
+a0file = os.path.join(runpath['OUT'],a0filename)
 
 ###_ . calculate vapor pressures
 simp = SimpolClass()
@@ -80,7 +82,7 @@ molefrac = pd.DataFrame(partition(last.ix[vp.index],vp['p0']*cfactor),
                         columns=['molefrac'])
 
 ###_ . merge with index
-indices = pd.read_csv('exec_total/compound_indices_table.csv',index_col='compound')
+indices = pd.read_csv('compound_indices_table.csv',index_col='compound')
 table = indices[['index']].join(molefrac,how='inner').sort('index')
 
 ###_ . export
