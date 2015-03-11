@@ -25,7 +25,7 @@ class InitModify:
         self.root = root
 
         self.module_aer = '''
-    USE apinene_GlobalAER, only: cAER0_total, &
+    USE apinene_GlobalAER, only: CAER0_total_microg_m3, &
          integratorcheck, partition_on, minconc, mf
 '''
 
@@ -65,17 +65,17 @@ class InitModify:
          access="sequential", form="formatted", action="read")
 
     ! read in defaults defined in input.txt
-    read (15, 113)  cAER0_total        !initial aerosol concentration
-    read (15, 111)  partition_on       !0=off; 1=on
-    read (15, 111)  integratorcheck    !0=off; 1=on
-    read (15, 113)  minconc            !minimum concentration (zero value) [ppb]
-    read (15, 111)  mf                 !LSODE Jacobian option (10, 21, 22)
+    read (15, 113)  CAER0_total_microg_m3   !initial aerosol concentration
+    read (15, 111)  partition_on            !0=off; 1=on
+    read (15, 111)  integratorcheck         !0=off; 1=on
+    read (15, 113)  minconc                 !minimum concentration (zero value) [ppb]
+    read (15, 111)  mf                      !LSODE Jacobian option (10, 21, 22)
     
     close(15)
     ! echo
     write(*,*) "read from file: ", "input_partitioning.txt"
     write(*,*) "read in values: ", &
-         "total initial CAER [g/m3]: ", cAER0_total, &
+         "total initial CAER [microg/m3]: ", CAER0_total_microg_m3, &
          "partition_on: ", partition_on, &
          "integratorcheck: ", integratorcheck, &
          "minconc: ", minconc, &          
@@ -87,7 +87,7 @@ class InitModify:
     ! overwrite time (optional)
     inquire(file="input_time.txt", exist=existp)
     if (existp) then
-       open (unit=15, file="input_time.txt", status='old',    &
+       open (unit=15, file="input_time.txt", status="old",    &
              access="sequential", form="formatted", action="read")
 
        read (15, 110)  TSTART

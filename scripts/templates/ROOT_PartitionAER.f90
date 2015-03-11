@@ -54,9 +54,10 @@ contains
     use {ROOT}_Parameters, only: NSPEC
     use {ROOT}_Global, only: TIME, TEND, TSTART ! FB: to print the total TIME, TEND, and TSTART
     use {ROOT}_GlobalAER, only: NorganicSPEC, &
-         integratorcheck, &           ! FB: to be able to set integrator type from external file
-         organic_selection_indices, & ! FB: only used for dlsode (creation of special vector y (only containing organics, like gammaf))
-         minconc, &
+         integratorcheck, Avogadro, &           
+         organic_selection_indices, & 
+         minconc, absorptivep, molecular_masses, &
+         CAER_total_molec_cm3, CAER_total_microg_m3, CAER0_total_microg_m3, &
          ! DLSODE (values set in _Initialize_AER.f90)
          iopt, istate, itask, itol, liw, lrw, mf, neq, ml, mu, &
          atol, rtol, rwork, y, iwork
@@ -70,7 +71,7 @@ contains
     character(len=100):: ERROR_MSG                   ! ERROR message to print
 !!$    real (kind=dp) :: sum_organic_CAER_old, sum_organic_CAER_old_microg_m3, mean_molecular_mass_of_organics
     integer           :: i, iAER, iOrg
-    real(kind=dp)     :: change, dGAS, dAER ! needed for the check whether d CGAS/dt = -d CAER/dt for each compound
+    real(kind=dp)     :: conversionf, change, dGAS, dAER ! needed for the check whether d CGAS/dt = -d CAER/dt for each compound
     ! LSODE PARAMETERS
     !external f1, jac1  ! NOTE (23.12.14): the declaration of f1 and jac1 seems not to be needed anymore in FORTRAN 90? (contradicting the DLSODE manual (lines 57 and 66 in opkdmain.f))
     ! ------------------------------------------------------------
@@ -83,14 +84,21 @@ contains
     rwork = 0.0_dp
     iwork = 0
     ! create state vector y = [CGAS; CAER]
+    CAER_total_molec_cm3 = 0 ! for integrator
+    CAER_total_microg_m3 = 0 ! for absorptivep
+    conversionf = 1.d12/Avogadro
     do i=1,NorganicSPEC
        iAER = i+NorganicSPEC
        iOrg = organic_selection_indices(i)
        y(i) = max(CGAS_old(iOrg),minconc)     ! this stabilizes the solution 
        y(iAER) = max(CAER_old(iOrg),minconc)  ! this stabilizes the solution 
-!!$       y(i) = CGAS_old(iOrg)
-!!$       y(iAER) = CAER_old(iOrg)
+       CAER_total_molec_cm3 = CAER_total_molec_cm3 + y(iAER)
+       CAER_total_microg_m3 = CAER_total_microg_m3 + y(iAER)*molecular_masses(iOrg)*conversionf
     end do
+    !
+    if (.NOT. absorptivep .AND. CAER_total_microg_m3 .GE. CAER0_total_microg_m3) then
+       absorptivep = .TRUE.
+    end if
     !
     ! integrate
     if (mf .eq. 21) then
@@ -98,7 +106,7 @@ contains
     else
        call dlsode(f1,neq,y,t,tout,itol,rtol,atol,itask,istate,iopt,rwork,lrw,iwork,liw,dummy,mf)
     endif
-    write(*,*) "ISTATE=", istate
+    write(*,*) "Partitioning LSODE ISTATE=", istate
     ! ------------------------------------------------------------
 
     ! -------------------- postprocess --------------------
@@ -145,28 +153,30 @@ end subroutine dummy
   ! *************************************************************************** !
   subroutine f1 (neq, t, y, ydot)
     ! modules
-    use {ROOT}_GlobalAER, only: Cstar, gammaf
+    use {ROOT}_GlobalAER, only: Cstar, gammaf, sum_Caer => CAER_total_molec_cm3, absorptivep
 
     ! local variables
-    integer neq
-    double precision t, y, ydot
+    integer          :: neq
+    double precision :: t, y, ydot
     dimension y(neq), ydot(neq)
 
-    integer :: i, nspec
-    double precision sum_Caer
+    integer          :: i, nspec
+    double precision :: x(neq)
 
     nspec = neq/2   ! shift between C_i and M_i of the same compound in the vector y
 
-    ! precompute sum of Caer
-    sum_Caer = 0
-    do i=1,nspec
-       sum_Caer = sum_Caer + y(i+nspec)
-    end do
-    ! x(i) = y(i+shift)/sum_Caer ! mole fraction
+    ! calculate mole fraction
+    if (absorptivep) then
+       do i = 1,nspec
+          x(i) = y(i+nspec)/sum_Caer ! mole fraction
+       end do
+    else
+       x = 1.d0
+    end if
 
     ! compute Cgas_dot; Caer_dot
     do i = 1,nspec
-       ydot(i) = gammaf(i) * ( y(i) - y(i+nspec) / sum_Caer * Cstar(i) )
+       ydot(i) = gammaf(i) * ( y(i) - x(i) * Cstar(i) )
        ydot(i+nspec) = - ydot(i)    
     end do
 
@@ -184,7 +194,7 @@ end subroutine dummy
     !          the ML and MU arguments in this case.)"
 
     ! modules
-    use {ROOT}_GlobalAER, only: Cstar, gammaf
+    use {ROOT}_GlobalAER, only: Cstar, gammaf, sum_Caer => CAER_total_molec_cm3
 
     ! local variables
     integer neq, ml, mu, nrowpd
@@ -192,15 +202,9 @@ end subroutine dummy
     dimension y(neq), pd(nrowpd,neq)
 
     integer :: i, j, nspec
-    double precision sum_Caer
+!!$    double precision sum_Caer
 
     nspec = neq/2   ! shift between C_i and M_i of the same compound in the vector y
-
-    ! precompute sum of Caer
-    sum_Caer = 0
-    do i=1,nspec
-       sum_Caer = sum_Caer + y(i+nspec)
-    end do
 
     ! fill the four different quadrants/sections of the Jacobian
     do i = 1,nspec
@@ -233,98 +237,5 @@ end subroutine dummy
     
     return
   end subroutine jac1
-  ! *************************************************************************** !
-!!$
-!!$  subroutine f1 (neq, t, y, ydot)
-!!$    ! modules
-!!$    use apinene_GlobalAER, only: Cstar, gammaf
-!!$
-!!$    ! local variables
-!!$    integer neq
-!!$    double precision t, y, ydot
-!!$    dimension y(neq), ydot(neq)
-!!$
-!!$    integer :: i, shift
-!!$    double precision sum_Caer
-!!$
-!!$    shift = neq/2   ! shift between C_i and M_i of the same compound in the vector y
-!!$
-!!$    ! precompute sum of Caer
-!!$    sum_Caer = 0
-!!$    do i=1,neq/2
-!!$      sum_Caer = sum_Caer + y(i+shift)
-!!$    end do
-!!$
-!!$    ! compute Cgas_dot
-!!$    do i = 1,neq/2
-!!$      ydot(i) = gammaf(i) * ( y(i) - y(i+shift) / sum_Caer * Cstar(i) )
-!!$    end do
-!!$    
-!!$    ! copy into Caer_dot
-!!$    do i = 1,neq/2
-!!$      ydot(shift + i) = - ydot(i)
-!!$    end do
-!!$    return
-!!$  end subroutine f1
-!!$
-!!$
-!!$
-!!$  subroutine jac1 (neq, t, y, ml, mu, pd, nrowpd)
-!!$
-!!$!     DOCUMENTATION (l.262):
-!!$!       " which provides df/dy by loading PD as follows:
-!!$!        - For a full Jacobian (MF = 21), load PD(i,j) with df(i)/dy(j),
-!!$!          the partial derivative of f(i) with respect to y(j).  (Ignore
-!!$!          the ML and MU arguments in this case.)"
-!!$
-!!$     ! modules
-!!$    use apinene_GlobalAER, only: Cstar, gammaf
-!!$
-!!$    ! local variables
-!!$    integer neq, ml, mu, nrowpd
-!!$    double precision t, y, pd
-!!$    dimension y(neq), pd(nrowpd,neq)
-!!$    
-!!$    integer :: i, j, shift
-!!$    double precision sum_Caer
-!!$
-!!$    shift = neq/2   ! shift between C_i and M_i of the same compound in the vector y
-!!$
-!!$    ! precompute sum of Caer
-!!$    sum_Caer = 0
-!!$    do i=1,neq/2
-!!$      sum_Caer = sum_Caer + y(i+shift)
-!!$    end do
-!!$
-!!$    ! fill the four different quadrants/sections of the Jacobian
-!!$    do i = 1,neq/2
-!!$      do j = 1,neq/2
-!!$        
-!!$      ! in comments: C = Cgas, M = Caer
-!!$      
-!!$        ! dCi'/dCj      = df(i)/dy(j)
-!!$        if (i==j) then
-!!$          pd(i,j) = gammaf(i)
-!!$        end if ! otherwise pd(i,j)=0
-!!$
-!!$        ! dCi'/dMj      = df(i)/dy(j+shift)
-!!$        if (i==j) then
-!!$          pd(i,j+shift) = - gammaf(i) * Cstar(i) * ( 1/sum_Caer - y(i + shift)/(sum_Caer*sum_Caer))
-!!$        else
-!!$          pd(i,j+shift) = - gammaf(i) * Cstar(i) * (            - y(i + shift)/(sum_Caer*sum_Caer))
-!!$        end if
-!!$
-!!$
-!!$        ! dMi'/dCj      = df(i+shift)/dy(j)
-!!$        if (i==j) then
-!!$          pd(i+shift,j) = - gammaf(i)
-!!$        end if ! otherwise pd(i+shift,j)=0
-!!$        
-!!$        ! dMi'/dMj      = df(i+shift)/dy(j+shift)
-!!$        pd(i+shift,j+shift) = - pd(i,j+shift)
-!!$      end do
-!!$    end do
-!!$    return
-!!$  end subroutine jac1
   
 end module {ROOT}_Partition

@@ -48,13 +48,13 @@ files = {
         'photolysis.txt'
         ],
     'required_total':[
-        'input_partitioning.txt',
-        'molefrac_init.txt'
+        'input_partitioning.txt'
         ],
     'optional':[
         'input_time.txt',
         'input_temp.txt',
-        'cgas_init.txt'
+        'cgas_init.txt',
+        'molefrac_init.txt'        
         ],
     'outputs':[
         'output_CGAS.txt',

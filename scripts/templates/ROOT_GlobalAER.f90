@@ -9,18 +9,23 @@
   real(kind=dp) :: VPAER(NSPEC)
 
   ! variables initialized by {ROOT}_Initialize.f90
-  integer             :: partition_on !FB
-  real(kind=dp)       :: cAER0_total        !FB: initial total amount of aerosol present (default: 313E11 (NSPEC*E11), can be overwritten by input textfile)
+  integer             :: partition_on
+  real(kind=dp)       :: CAER0_total_microg_m3  
+  real(kind=dp)       :: CAER_total_microg_m3        
+  real(kind=dp)       :: CAER_total_molec_cm3        
   integer             :: integratorcheck = 0
+  logical             :: absorptivep=.TRUE.
 
   ! Define special variables to keep dlsode easy and organised (they contain only the organic species, unlike the fixed parameters above)
   real(kind=dp), dimension(:), allocatable :: Cstar  ! FB: VPAER but only containing organic species, will be used by DLSODE f-function
   real(kind=dp), dimension(:), allocatable :: gammaf ! FB: factor for partitioning of organic species, will be used by DLSODE f-function
 
   ! read in with read_in_subset_of_organics(), defined by org_indices.f90 and org_molecular_masses.f90
-  integer                            :: NorganicSPEC               !FB ! TODO: define whether this is needed after all (not if I'm only looping over the binary vector, and by defining CAER_total)
-  integer, dimension(:), allocatable :: organic_selection_indices  !FB: defines indices of organic compounds in "C0", "M0", etc.
-  real(kind=dp), dimension(NSPEC)    :: molecular_masses           !FB: molecular masses of organic compounds, (inorganic will have 0), to convert initial amount of aerosl from µg/m3 to molecules/cm3
+  integer                                  :: NorganicSPEC               !FB ! TODO: define whether this is needed after all (not if I'm only looping over the binary vector, and by defining CAER_total)
+  integer, dimension(:), allocatable       :: organic_selection_indices  !FB: defines indices of organic compounds in "C0", "M0", etc.
+  real(kind=dp), dimension(:), allocatable :: organic_molecular_masses
+  real(kind=dp), dimension(NSPEC)          :: orgmask
+  real(kind=dp), dimension(NSPEC)          :: molecular_masses           !FB: molecular masses of organic compounds, (inorganic will have 0), to convert initial amount of aerosl from µg/m3 to molecules/cm3
 
   ! constants
   real(kind = dp), parameter  :: pi_constant = 4_dp * atan(1.0_dp)
@@ -39,21 +44,39 @@ contains
 
   subroutine print_organic_aerosol_mass()
   
-    real(kind=dp) :: sum_aer, sum_prod, mean_molec_mass, sum_aer_microg_m3
-    integer :: ix, iOrg
+    real(kind=dp) :: sum_Caer, org_mass
 
-    sum_aer = 0
-    sum_prod = 0
-    do ix = 1, NorganicSPEC
-       iOrg = organic_selection_indices(ix)
-       sum_aer = sum_aer + CAER(iOrg)
-       sum_prod = sum_prod + (CAER(iOrg)*molecular_masses(iOrg))
-    end do
-    mean_molec_mass = sum_prod/sum_aer
-    sum_aer_microg_m3 =sum_aer*(1000000_dp*mean_molec_mass/Avogadro)
-    write(*,*) 'sum organic CAER  [molecules/cm3] :', sum_aer, &
-         'corresponds approx. to [microg/m3]: ', sum_aer_microg_m3
+    sum_Caer = sum(CAER*orgmask)
+    org_mass = calc_organic_aerosol_mass(CAER)
+    write(*,*) 'sum organic CAER  [molecules/cm3] :', sum_Caer, &
+         'corresponds approx. to [microg/m3]: ', org_mass
 
   end subroutine print_organic_aerosol_mass
+
+  function calc_aerosol_conc(mass, mean_molec_mass) result(conc)
+    ! mass is in microg/m^3
+    ! conc is in molec/cm^3
+    real(kind=dp), intent(in) :: mass
+    real(kind=dp), intent(in) :: mean_molec_mass
+    real(kind=dp)            :: conc
+
+    ! [molecules/cm3] = [microg/m3][100^-6,m3/cm3*10^-6,g/microg][g/mole]^-1[molec/mole]
+    conc = mass*1.d-12/mean_molec_mass*Avogadro
+
+  end function calc_aerosol_conc
+
+  function calc_organic_aerosol_mass(conc) result(org_mass)
+    ! conc is in molec/cm^3
+    ! org_mass is in microg/m^3
+    real(kind=dp), dimension(:), intent(in) :: conc
+    real(kind=dp)                           :: org_mass
+    !
+    if (size(conc) .eq. NSPEC) then
+       org_mass = sum(conc*molecular_masses*orgmask)/Avogadro*1.d12
+    else if (size(conc) .eq. NorganicSPEC) then
+       org_mass = sum(conc*organic_molecular_masses)/Avogadro*1.d12   
+    end if
+
+  end function calc_organic_aerosol_mass
 
 end module {ROOT}_GlobalAER

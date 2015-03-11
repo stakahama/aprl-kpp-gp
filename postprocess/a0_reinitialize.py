@@ -50,7 +50,7 @@ cfactor = 10**9          # atm to ppb conversion factor
 
 def partition(p,p0):     # p0, p in ppb
     excess = p-p0
-    aer = excess.map(lambda x: x if x > 0 else 0)
+    aer = excess.map(lambda x: max(x,0))
     return aer/aer.sum() # mole fraction
 
 ###_ . read in temperature
@@ -86,4 +86,6 @@ indices = pd.read_csv('compound_indices_table.csv',index_col='compound')
 table = indices[['index']].join(molefrac,how='inner').sort('index')
 
 ###_ . export
-table.to_csv(a0file,sep='\t',header=False,index=False)
+with open(a0file,'w') as fout:
+    fout.write('#gaspartitioning\n')
+    table.to_csv(fout,sep='\t',header=False,index=False)

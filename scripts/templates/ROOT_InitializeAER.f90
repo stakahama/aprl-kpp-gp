@@ -10,10 +10,11 @@ contains
     use {ROOT}_Precision, only : dp
     use {ROOT}_Parameters, only : NSPEC
     use {ROOT}_Global, only : TEMP, CFACTOR, CGAS => C, TSTART
-    use {ROOT}_GlobalAER, only : CAER, VPAER, molecular_masses, &
-         NorganicSPEC, cAER0_total, &
-         Cstar, gammaf, organic_selection_indices, &
-         pi_constant, Avogadro, &
+    use {ROOT}_GlobalAER, only : CAER, VPAER, NorganicSPEC, &
+         molecular_masses, orgmask, organic_selection_indices, &
+         CAER0_total_microg_m3, CAER_total_microg_m3, CAER_total_molec_cm3, &
+         Cstar, gammaf, pi_constant, &
+         calc_aerosol_conc, absorptivep, &
          ! DLSODE
          iopt, istate, itask, itol, liw, lrw, mf, neq, ml, mu, &
          atol, rtol, rwork, y, iwork
@@ -32,7 +33,7 @@ contains
     !
     real(dp)                    :: molefrac
     real(dp), dimension(NSPEC)  :: a0
-    real(dp)                    :: CAER_total_in_g_per_m3, CAER_total_in_molecules_per_cm3, mean_molecular_mass_of_organics !FB: to convert initial amount of aerosol from µg/m3 to molecules/cm3
+    real(dp)                    :: mean_molecular_mass_of_organics !FB: to convert initial amount of aerosol from µg/m3 to molecules/cm3
     !
     integer, dimension(ngroups) :: abundance
     real(dp)                    :: vp_atm=0.d0
@@ -114,24 +115,20 @@ contains
           a0(ix) = molefrac
        end do
        close(55)
+       absorptivep = .TRUE.
     else
        a0 = 1.d0
+       absorptivep = .FALSE.
     endif
     a0 = a0/sum(a0) ! ensure mole fractions == 1
-    ! ------------------------------------------------------------
-
-    ! ------------------------------------------------------------    
-    ! calculate initial CAER defined by the amount of CAER_total_in_g_per_m3     
-    CAER_total_in_g_per_m3 =  cAER0_total ! [g/m3] defined by input text file (read in {ROOT}_Initialize.f90)
-    ! old definition:       CAER_total_in_molecules_per_cm3 = NorganicSPEC*1E10 ! [molecules/cm3]     
-    ! old definition corresponded to [g/m3]: 1598E-6 = 0.00159825 = 294*10^10*10^6*327.37/(6.022*10^23)     
     !
-    ! convert to molecules/cm3
-    mean_molecular_mass_of_organics = sum(a0*molecular_masses) ! [g/mol] to convert amount of initial total aerosol correctly from [g/m3] to [molecules/m3]
+    mean_molecular_mass_of_organics = sum(a0*molecular_masses*orgmask)
     write(*,*) "a0 weighted mean of molecular mass to transform I.C from microgram/m3 to molecules/cm3: ", &
          mean_molecular_mass_of_organics
-    CAER_total_in_molecules_per_cm3 = CAER_total_in_g_per_m3/(1000000_dp*mean_molecular_mass_of_organics)*Avogadro ! [molecules/cm3] = [g/m3]*[100^-3,m3/cm3][g/mole]^-1[molec/mole]
-    CAER = CAER_total_in_molecules_per_cm3*a0    ! [molecules/cm3]
+    !
+    CAER_total_microg_m3 = CAER0_total_microg_m3
+    CAER_total_molec_cm3 = calc_aerosol_conc(CAER0_total_microg_m3, mean_molecular_mass_of_organics)
+    CAER = CAER_total_molec_cm3*a0    ! [molecules/cm3]
     ! ------------------------------------------------------------
     
     ! -------------------- prepare variables for integration (uses only the organic subset) --------------------
@@ -165,26 +162,33 @@ contains
 
     ! OUTPUT: the vectors "organic_selection_indices","organic_selection_binary", and molecular_masses will be overwritten
     use {ROOT}_Parameters, only : NSPEC
-    use {ROOT}_GlobalAER, only : NorganicSPEC, organic_selection_indices, molecular_masses
+    use {ROOT}_GlobalAER, only : NorganicSPEC, &
+         organic_selection_indices, organic_molecular_masses, &
+         molecular_masses, orgmask
     
     ! local variables
     integer :: ix
-    real, dimension(:), allocatable    :: organics_mol_masses
     integer, dimension(:), allocatable :: organics
+    real, dimension(:), allocatable    :: organics_mol_masses
 
     include 'org_indices.f90' ! will define a vector 'organics' containing the indices of organics in the vectors "C0", "CAER", etc.
-!!$      include 'org_molecular_masses.f90' ! will define a vector 'organics_mol_masses' containing the molecular masses of organics. It is ordered the same way as the indices in 'organics'.
+
+    !
     NorganicSPEC = size(organics)
+    allocate(organic_selection_indices(NorganicSPEC))
+    allocate(organic_molecular_masses(NorganicSPEC))
     organic_selection_indices = organics
+    organic_molecular_masses = organics_mol_masses
 
-    molecular_masses = 0 ! inorganics will keep a molecular mass of 0
-
-    do ix = 1,size(organics)
+    orgmask = 0.d0
+    molecular_masses = 0.d0 ! inorganics will keep a molecular mass of 0
+    do ix = 1,NorganicSPEC
        ! save the molecular mass
        molecular_masses(organics(ix)) = organics_mol_masses(ix)
+       orgmask(organics(ix)) = 1.d0
        !write(*,*) "read mol masses: ", molecular_masses(organics(ix)), "for comopound", organics(ix), ix, "th, organic compound"
     end do
-
+    
   end subroutine read_in_subset_of_organics
 
 end module {ROOT}_InitializeAER
