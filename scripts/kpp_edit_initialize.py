@@ -26,7 +26,7 @@ class InitModify:
 
         self.module_aer = '''
     USE apinene_GlobalAER, only: CAER0_total_microg_m3, &
-         integratorcheck, partition_on, minconc, mf
+         integratorcheck, partitioning_mode, absorptive_mode, minconc, mf
 '''
 
         self.declaration_gas = '''
@@ -66,7 +66,8 @@ class InitModify:
 
     ! read in defaults defined in input.txt
     read (15, 113)  CAER0_total_microg_m3   !initial aerosol concentration
-    read (15, 111)  partition_on            !0=off; 1=on
+    read (15, 111)  partitioning_mode       !0=off; 1=on
+    read (15, 111)  absorptive_mode         !0=off; 1=on    
     read (15, 111)  integratorcheck         !0=off; 1=on
     read (15, 113)  minconc                 !minimum concentration (zero value) [ppb]
     read (15, 111)  mf                      !LSODE Jacobian option (10, 21, 22)
@@ -76,7 +77,8 @@ class InitModify:
     write(*,*) "read from file: ", "input_partitioning.txt"
     write(*,*) "read in values: ", &
          "total initial CAER [microg/m3]: ", CAER0_total_microg_m3, &
-         "partition_on: ", partition_on, &
+         "partitioning_mode: ", partitioning_mode, &
+         "absorptive_mode: ", absorptive_mode, &         
          "integratorcheck: ", integratorcheck, &
          "minconc: ", minconc, &          
          "mf: ", mf         

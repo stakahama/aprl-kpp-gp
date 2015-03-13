@@ -9,7 +9,7 @@ from collections import OrderedDict
 import argparse
 
 ###_* -------------------- parse arguments --------------------
-parser = argparse.ArgumentParser(description='generate a0.txt')
+parser = argparse.ArgumentParser(description='harvest input files')
 parser.add_argument('ROOT',type=str)
 parser.add_argument('RUNPATH',type=str,nargs='*')
 args = parser.parse_args()
@@ -18,7 +18,7 @@ deffile = args.ROOT+'.def'
 
 runs = args.RUNPATH
 if len(runs)==0:
-    runs = glob.glob('run_*')
+    runs = sorted(glob.glob('run_*'))
 
 ###_* -------------------- define paths --------------------
 
@@ -29,7 +29,7 @@ mech = os.path.basename(HERE)
 input_files = {
     'input_time.txt':('TSTART','DURATION','DT'),
     'input_temp.txt':('TEMP','CFACTOR'),
-    'input_partitioning.txt':('M0','PARTITION_ON','INTEGRATORCHECK','MINCONC','MF')
+    'input_partitioning.txt':('M0','PARTITIONING_MODE','ABSORPTIVE_MODE','INTEGRATORCHECK','MINCONC','MF')
     }
 
 ###_* -------------------- define functions --------------------
@@ -81,9 +81,11 @@ with open(deffile) as f:
 
 ###_* -------------------- harvest runs --------------------
 
-master = None
+master = pd.DataFrame()
 
 for runpath in runs:
+
+    print runpath
 
     augmented = OrderedDict()
 
@@ -123,10 +125,11 @@ for runpath in runs:
     parmstable.insert(0,'RUN',runpath)
     parmstable.insert(0,'MECHANISM',mech)
 
-    if master:
-        master = master.join(parmstable,how='outer')
-    else:
+    if master.empty:
         master = parmstable
+    else:
+        master = master.merge(parmstable,how='outer')        
+
 
 ###_* -------------------- export --------------------
 

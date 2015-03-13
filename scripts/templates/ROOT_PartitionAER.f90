@@ -21,20 +21,41 @@ contains
     ! modules
     use {ROOT}_Parameters, only: NSPEC
     use {ROOT}_Global, only: CGAS => C
-    use {ROOT}_GlobalAER, only: CAER, print_organic_aerosol_mass
+    use {ROOT}_GlobalAER, only: CAER, &
+         calc_organic_aerosol_mass, print_organic_aerosol_mass, &
+         CAER_total_microg_m3, CAER0_total_microg_m3, &
+         absorptivep, epsilon, &
+         partitioning_mode, absorptive_mode, minconc
 
     ! bound variables
     real(kind=dp), intent(in) :: t, tout
     
     ! local variables
     real(kind=dp), dimension(NSPEC) :: CAER_new, CGAS_new
-    
-    call print_organic_aerosol_mass()
+
+!!$    call print_organic_aerosol_mass()
+    CAER_total_microg_m3 = calc_organic_aerosol_mass(CAER)
+    write(*,*) 'sum organic CAER [microg/m3]: ', CAER_total_microg_m3
+
+    if ((.not. absorptivep)) then
+       if ( ( absorptive_mode .eq. 1 .and. CAER_total_microg_m3 .gt. 0. ) .or. &
+            ( absorptive_mode .eq. 2 .and. CAER_total_microg_m3 .gt. CAER0_total_microg_m3 ) ) then
+          absorptivep = .TRUE.
+       end if
+    end if
+
+    where(CGAS .le. minconc) ! use epsilon?
+       CGAS = minconc
+    end where
 
     CGAS_new = CGAS;
     CAER_new = CAER;
 
-    call integrate(t, tout, CGAS, CAER, CGAS_new, CAER_new)
+    if (partitioning_mode .eq. 1) then 
+       call instantaneous(CGAS, CAER, CGAS_new, CAER_new)
+    else if (partitioning_mode .gt. 1) then
+       call integrate(t, tout, CGAS, CAER, CGAS_new, CAER_new)
+    end if
 
     CGAS = CGAS_new
     CAER = CAER_new
@@ -42,6 +63,35 @@ contains
 987 FORMAT(1000ES19.11E3)  ! max 1000 species, then linebreak, can easily be increased here and in 986 (or use '<n>', but not supported by compiler gfortran)
 
   end subroutine partition
+  ! *************************************************************************** !
+
+  ! *************************************************************************** !
+  subroutine instantaneous(CGAS_old, CAER_old, CGAS_new, CAER_new)
+
+    ! modules
+    use {ROOT}_GlobalAER, only: NSPEC
+    use {ROOT}_GlobalAER, only: Cstar, NorganicSPEC, organic_selection_indices, &
+         absorptivep, calc_aerosol_molefrac
+    ! bound variables
+    real(kind=dp), dimension(NSPEC), intent(in)  :: CGAS_old, CAER_old
+    real(kind=dp), dimension(NSPEC), intent(inout) :: CGAS_new, CAER_new
+    ! local variables
+    integer       :: ix, iOrg
+    real(kind=dp) :: total, saturation_conc
+    real(kind=dp), dimension(NorganicSPEC) :: xorgaer
+    ! body    
+    call calc_aerosol_molefrac(CAER_old, absorptivep, xorgaer)
+    do ix=1,NorganicSPEC
+       iOrg = organic_selection_indices(ix)
+       total = CAER_old(iOrg) + CGAS_old(iOrg)
+       saturation_conc = xorgaer(ix)*Cstar(ix)
+       if (total .gt. saturation_conc) then
+          CAER_new(iOrg) = total - saturation_conc
+          CGAS_new(iOrg) = saturation_conc
+       end if
+    end do
+
+  end subroutine instantaneous
   ! *************************************************************************** !
 
   ! *************************************************************************** !  
@@ -54,10 +104,11 @@ contains
     use {ROOT}_Parameters, only: NSPEC
     use {ROOT}_Global, only: TIME, TEND, TSTART ! FB: to print the total TIME, TEND, and TSTART
     use {ROOT}_GlobalAER, only: NorganicSPEC, &
-         integratorcheck, Avogadro, &           
+         integratorcheck, &           
          organic_selection_indices, & 
-         minconc, absorptivep, molecular_masses, &
-         CAER_total_molec_cm3, CAER_total_microg_m3, CAER0_total_microg_m3, &
+         minconc, molecular_masses, &
+         CAER_total_molec_cm3, absorptivep, &
+         CAER_ghost_molec_cm3, &
          ! DLSODE (values set in _Initialize_AER.f90)
          iopt, istate, itask, itol, liw, lrw, mf, neq, ml, mu, &
          atol, rtol, rwork, y, iwork
@@ -65,7 +116,7 @@ contains
     ! bound variables
     real(kind=dp), intent(in)                    :: TINIT, TNEXT
     real(kind=dp), dimension(NSPEC), intent(in)  :: CGAS_old, CAER_old
-    real(kind=dp), dimension(NSPEC), intent(out) :: CGAS_new, CAER_new
+    real(kind=dp), dimension(NSPEC), intent(inout) :: CGAS_new, CAER_new
     ! local variables
     real(kind=dp)     :: T, TOUT 
     character(len=100):: ERROR_MSG                   ! ERROR message to print
@@ -84,27 +135,32 @@ contains
     rwork = 0.0_dp
     iwork = 0
     ! create state vector y = [CGAS; CAER]
-    CAER_total_molec_cm3 = 0 ! for integrator
-    CAER_total_microg_m3 = 0 ! for absorptivep
-    conversionf = 1.d12/Avogadro
+    ! calculate total aerosol in molecules/cm^3
+    CAER_total_molec_cm3 = CAER_ghost_molec_cm3 ! for integrator
     do i=1,NorganicSPEC
        iAER = i+NorganicSPEC
        iOrg = organic_selection_indices(i)
-       y(i) = max(CGAS_old(iOrg),minconc)     ! this stabilizes the solution 
-       y(iAER) = max(CAER_old(iOrg),minconc)  ! this stabilizes the solution 
+       y(i) = CGAS_old(iOrg)
+       y(iAER) = CAER_old(iOrg)
+!!$       y(i) = max(CGAS_old(iOrg),minconc)     ! this stabilizes the solution 
+!!$       y(iAER) = max(CAER_old(iOrg),minconc)  ! this stabilizes the solution 
+       !
        CAER_total_molec_cm3 = CAER_total_molec_cm3 + y(iAER)
-       CAER_total_microg_m3 = CAER_total_microg_m3 + y(iAER)*molecular_masses(iOrg)*conversionf
     end do
-    !
-    if (.NOT. absorptivep .AND. CAER_total_microg_m3 .GE. CAER0_total_microg_m3) then
-       absorptivep = .TRUE.
-    end if
     !
     ! integrate
     if (mf .eq. 21) then
-       call dlsode(f1,neq,y,t,tout,itol,rtol,atol,itask,istate,iopt,rwork,lrw,iwork,liw,jac1,mf)
+       if (absorptivep) then
+          call dlsode(f1,neq,y,t,tout,itol,rtol,atol,itask,istate,iopt,rwork,lrw,iwork,liw,jac1,mf)
+       else 
+          call dlsode(f1_init,neq,y,t,tout,itol,rtol,atol,itask,istate,iopt,rwork,lrw,iwork,liw,jac1,mf)
+       end if
     else
-       call dlsode(f1,neq,y,t,tout,itol,rtol,atol,itask,istate,iopt,rwork,lrw,iwork,liw,dummy,mf)
+       if (absorptivep) then
+          call dlsode(f1,neq,y,t,tout,itol,rtol,atol,itask,istate,iopt,rwork,lrw,iwork,liw,jac1_dummy,mf)
+       else 
+          call dlsode(f1_init,neq,y,t,tout,itol,rtol,atol,itask,istate,iopt,rwork,lrw,iwork,liw,jac1_dummy,mf)
+       end if
     endif
     write(*,*) "Partitioning LSODE ISTATE=", istate
     ! ------------------------------------------------------------
@@ -137,7 +193,7 @@ contains
   end subroutine integrate
   ! --------------------------------------------------------------------------- !
 
-subroutine dummy (neq, t, y, ml, mu, pd, nrowpd)
+subroutine jac1_dummy (neq, t, y, ml, mu, pd, nrowpd)
 
     ! local variables
     integer neq, ml, mu, nrowpd
@@ -145,38 +201,55 @@ subroutine dummy (neq, t, y, ml, mu, pd, nrowpd)
     dimension y(neq), pd(nrowpd,neq)
 
     ! body: pass
-end subroutine dummy
-  
+end subroutine jac1_dummy
 
   ! -------------------- routines required by LSODE --------------------
 
   ! *************************************************************************** !
-  subroutine f1 (neq, t, y, ydot)
+  subroutine f1_init (neq, t, y, ydot)
     ! modules
-    use {ROOT}_GlobalAER, only: Cstar, gammaf, sum_Caer => CAER_total_molec_cm3, absorptivep
+    use {ROOT}_GlobalAER, only: Cstar, gammaf, xorgaer_init
 
-    ! local variables
+    ! bound variables
     integer          :: neq
     double precision :: t, y, ydot
     dimension y(neq), ydot(neq)
-
+    
+    ! local variables
     integer          :: i, nspec
-    double precision :: x(neq)
+    double precision :: caer
 
     nspec = neq/2   ! shift between C_i and M_i of the same compound in the vector y
 
-    ! calculate mole fraction
-    if (absorptivep) then
-       do i = 1,nspec
-          x(i) = y(i+nspec)/sum_Caer ! mole fraction
-       end do
-    else
-       x = 1.d0
-    end if
+    ! compute Cgas_dot; Caer_dot
+    do i = 1,nspec
+       ydot(i) = gammaf(i) * ( y(i) - xorgaer_init(i) * Cstar(i) )
+       ydot(i+nspec) = - ydot(i)    
+    end do
+
+    return
+  end subroutine f1_init
+  ! *************************************************************************** !
+
+  ! *************************************************************************** !
+  subroutine f1 (neq, t, y, ydot)
+    ! modules
+    use {ROOT}_GlobalAER, only: Cstar, gammaf, sum_Caer => CAER_total_molec_cm3
+
+    ! bound variables
+    integer          :: neq
+    double precision :: t, y, ydot
+    dimension y(neq), ydot(neq)
+    
+    ! local variables
+    integer          :: i, nspec
+    double precision :: caer
+
+    nspec = neq/2   ! shift between C_i and M_i of the same compound in the vector y
 
     ! compute Cgas_dot; Caer_dot
     do i = 1,nspec
-       ydot(i) = gammaf(i) * ( y(i) - x(i) * Cstar(i) )
+       ydot(i) = gammaf(i) * ( y(i) - y(i+nspec)/sum_Caer* Cstar(i) )
        ydot(i+nspec) = - ydot(i)    
     end do
 
@@ -186,6 +259,7 @@ end subroutine dummy
 
   ! *************************************************************************** !
   subroutine jac1 (neq, t, y, ml, mu, pd, nrowpd)
+    ! only works for absorptivep .eq. .true.
 
     !     DOCUMENTATION (l.262):
     !       " which provides df/dy by loading PD as follows:
@@ -194,7 +268,8 @@ end subroutine dummy
     !          the ML and MU arguments in this case.)"
 
     ! modules
-    use {ROOT}_GlobalAER, only: Cstar, gammaf, sum_Caer => CAER_total_molec_cm3
+    use {ROOT}_GlobalAER, only: Cstar, gammaf, &
+         sum_Caer => CAER_total_molec_cm3
 
     ! local variables
     integer neq, ml, mu, nrowpd

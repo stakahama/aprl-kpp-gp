@@ -14,7 +14,8 @@ contains
          molecular_masses, orgmask, organic_selection_indices, &
          CAER0_total_microg_m3, CAER_total_microg_m3, CAER_total_molec_cm3, &
          Cstar, gammaf, pi_constant, &
-         calc_aerosol_conc, absorptivep, &
+         calc_aerosol_conc, absorptivep, absorptive_mode, &
+         xorgaer_init, epsilon, CAER_ghost_molec_cm3, Avogadro, &
          ! DLSODE
          iopt, istate, itask, itol, liw, lrw, mf, neq, ml, mu, &
          atol, rtol, rwork, y, iwork
@@ -103,33 +104,6 @@ contains
     allocate(iwork(liw))       ! Integer work array of length at least: 20 + NEQ                 for MF = 21, 22, 24, or 25.
     allocate(y(neq))
     ! ------------------------------------------------------------    
-
-    ! -------------------- INITIAL MOLE FRACTIONS --------------------
-    a0 = 0.d0
-    inquire(file="molefrac_init.txt", exist=existp)
-    if (existp) then 
-       open(55,file="molefrac_init.txt", status="old")
-       read(55,*) !header/comment line (skip)
-       do i = 1,NorganicSPEC
-          read(55,*) ix, molefrac
-          a0(ix) = molefrac
-       end do
-       close(55)
-       absorptivep = .TRUE.
-    else
-       a0 = 1.d0
-       absorptivep = .FALSE.
-    endif
-    a0 = a0/sum(a0) ! ensure mole fractions == 1
-    !
-    mean_molecular_mass_of_organics = sum(a0*molecular_masses*orgmask)
-    write(*,*) "a0 weighted mean of molecular mass to transform I.C from microgram/m3 to molecules/cm3: ", &
-         mean_molecular_mass_of_organics
-    !
-    CAER_total_microg_m3 = CAER0_total_microg_m3
-    CAER_total_molec_cm3 = calc_aerosol_conc(CAER0_total_microg_m3, mean_molecular_mass_of_organics)
-    CAER = CAER_total_molec_cm3*a0    ! [molecules/cm3]
-    ! ------------------------------------------------------------
     
     ! -------------------- prepare variables for integration (uses only the organic subset) --------------------
     allocate(Cstar(NorganicSPEC))
@@ -140,6 +114,62 @@ contains
        gammaf(i) = -2.d0*pi_constant*nr_aerosol_particles*d_ve_aerosols*f_a_Kn*Diff_coeff(iOrg);
     end do
     ! ------------------------------------------------------------    
+
+    ! -------------------- INITIAL MOLE FRACTIONS --------------------
+    allocate(xorgaer_init(NorganicSPEC))
+    a0 = 1.d0
+    xorgaer_init = 1.d0
+    inquire(file="molefrac_init.txt", exist=existp)
+    if (existp) then 
+       open(55,file="molefrac_init.txt", status="old")
+       read(55,*) !header/comment line (skip)
+       do i = 1,NorganicSPEC
+          read(55,*) ix, molefrac
+          a0(ix) = molefrac
+       end do
+       close(55)
+       xorgaer_init = a0
+       !
+       if(all(a0 .le. epsilon)) then
+          mean_molecular_mass_of_organics = 1.d0          
+!!$       else if(all(abs(a0-1.d0) .le. epsilon)) then
+!!$          mean_molecular_mass_of_organics = 1.d0          
+       else
+          a0 = a0/sum(a0) ! ensure mole fractions == 1
+          mean_molecular_mass_of_organics = sum(a0*molecular_masses*orgmask)
+       end if
+       !
+       if (absorptive_mode .eq. 0) then
+          absorptivep = .TRUE.
+          write(*,*) "a0 weighted mean of molecular mass to transform I.C from microgram/m3 to molecules/cm3: ", &
+               mean_molecular_mass_of_organics
+          CAER_total_molec_cm3 = calc_aerosol_conc(CAER0_total_microg_m3, mean_molecular_mass_of_organics)
+       else if (absorptive_mode .gt. 0) then
+          absorptivep = .FALSE.
+          CAER_total_molec_cm3 = 0.d0
+       end if
+       CAER = CAER_total_molec_cm3*a0    ! [molecules/cm3]
+    else
+       ! self-starting
+       absorptivep = .TRUE.
+       CAER = 0.d0
+       CAER_total_molec_cm3 = 0.d0
+       do i=1,NorganicSPEC
+          iOrg = organic_selection_indices(i)
+          CAER(iOrg) = CAER0_total_microg_m3*CGAS(iOrg)/CSTAR(i)/molecular_masses(iOrg)*Avogadro*1.d-12
+          CAER_total_molec_cm3 = CAER_total_molec_cm3 + CAER(iOrg)
+       end do
+       mean_molecular_mass_of_organics = sum(CAER*molecular_masses*ORGMASK)/CAER_total_molec_cm3
+       if(absorptive_mode .gt. 0) then
+          CAER_ghost_molec_cm3 = 0.d0
+       else 
+          CAER_ghost_molec_cm3 = (CAER0_total_microg_m3/mean_molecular_mass_of_organics*Avogadro*1.d-12)-CAER_total_molec_cm3
+       end if
+       xorgaer_init = CAER/CAER_total_molec_cm3
+       !
+    endif
+    !
+    ! ------------------------------------------------------------
 
     ! -------------------- open files and overwrite them completely --------------------
     inquire(file="output_ERRORS.txt", exist=existp)

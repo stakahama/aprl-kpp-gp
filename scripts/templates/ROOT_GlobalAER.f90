@@ -8,11 +8,15 @@
   real(kind=dp) :: CAER(NSPEC)
   real(kind=dp) :: VPAER(NSPEC)
 
+  real(kind=dp), parameter :: epsilon = .000001
+
   ! variables initialized by {ROOT}_Initialize.f90
-  integer             :: partition_on
-  real(kind=dp)       :: CAER0_total_microg_m3  
-  real(kind=dp)       :: CAER_total_microg_m3        
-  real(kind=dp)       :: CAER_total_molec_cm3        
+  integer             :: partitioning_mode ! 2
+  integer             :: absorptive_mode   ! 2
+  real(kind=dp)       :: CAER0_total_microg_m3 = 0.d0  
+  real(kind=dp)       :: CAER_total_microg_m3 = 0.d0        
+  real(kind=dp)       :: CAER_total_molec_cm3 = 0.d0        
+  real(kind=dp)       :: CAER_ghost_molec_cm3 = 0.d0
   integer             :: integratorcheck = 0
   logical             :: absorptivep=.TRUE.
 
@@ -24,6 +28,7 @@
   integer                                  :: NorganicSPEC               !FB ! TODO: define whether this is needed after all (not if I'm only looping over the binary vector, and by defining CAER_total)
   integer, dimension(:), allocatable       :: organic_selection_indices  !FB: defines indices of organic compounds in "C0", "M0", etc.
   real(kind=dp), dimension(:), allocatable :: organic_molecular_masses
+  real(kind=dp), dimension(:), allocatable :: xorgaer_init
   real(kind=dp), dimension(NSPEC)          :: orgmask
   real(kind=dp), dimension(NSPEC)          :: molecular_masses           !FB: molecular masses of organic compounds, (inorganic will have 0), to convert initial amount of aerosl from µg/m3 to molecules/cm3
 
@@ -76,7 +81,24 @@ contains
     else if (size(conc) .eq. NorganicSPEC) then
        org_mass = sum(conc*organic_molecular_masses)/Avogadro*1.d12   
     end if
-
+    !
   end function calc_organic_aerosol_mass
+
+  subroutine calc_aerosol_molefrac(caer,absorptivep,xorgaer)
+    ! caer = molec/cm^3
+    real(kind=dp), dimension(:), intent(in)  :: caer
+    logical, intent(in)                      :: absorptivep
+    real(kind=dp), dimension(:), intent(out) :: xorgaer
+    ! local
+    integer :: ix
+    !
+    if (absorptivep) then
+       caer_total_molec_cm3 = sum(caer*orgmask)
+       xorgaer = (/ (caer(organic_selection_indices(ix))/caer_total_molec_cm3, ix=1,NorganicSPEC) /)
+    else 
+       xorgaer = xorgaer_init
+    end if
+    !
+  end subroutine calc_aerosol_molefrac
 
 end module {ROOT}_GlobalAER

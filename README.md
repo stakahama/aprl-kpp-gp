@@ -82,10 +82,11 @@ Simulations:
 - input\_partitioning.txt: `M0` is the initial aerosol concentration in micrograms per cubic meter; `PARTITION\_ON` is 1 (or 0 for no partitioning); `INTEGRATORCHECK` determines whether additional diagnostics are run (0=off, 1=on); `MINCONC` is the value (in ppb) at which minimum concentrations in gas and aerosol phases are maintained; `MF` is a DLSODE option which controls the integration (10=Nonstiff, no Jacobian required; 21=User-supplies Jacobian-generating function (default); 22=Jacobian is internally generated). `MINCONC`=0 and `MF`=22 is recommended.
 
 		{M0}
-		{PARTITION_ON}
+		{PARTITIONING_MODE}
+		{ABSORPTIVE_MODE}
 		{INTEGRATORCHECK}
-                {MINCONC}
-                {MF}
+		{MINCONC}
+		{MF}
 
 - molefrac\_init.txt: `IND` is the organic compound index and `a0` is the initial mole fraction; the first line is a label (for "harvest_parms.py") preceded by `#`
 

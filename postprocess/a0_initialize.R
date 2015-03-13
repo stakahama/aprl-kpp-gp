@@ -2,12 +2,26 @@
 
 ###_* inputs ====================
 
-root <- "apinene"
-inputrun <- "run_01b"
-outputrun <- "run_01b"
-type <- c("FB","GAS")[1]
+## root <- "apinene"
+## inputrun <- "run_01b"
+## outputrun <- "run_01b"
+## type <- c("FB","GAS")[1]
 
-###_* functions ====================
+argv <- commandArgs(TRUE)
+root <- argv[1]
+type <- argv[2]
+inputrun <- argv[3]
+
+outputrun <- inputrun
+
+## possible:
+if( !type %in% c("purecomponent",
+                 "infinitesink",
+                 "equalcomponent",
+                 "initialequilibrium",
+                 "gasphasecomp",
+                 "recycledseed") )
+  stop("--- not valid 'type' ---")
 
 ###_* other values ====================
 
@@ -25,10 +39,12 @@ compounds <- read.csv("compound_indices_table.csv",
                       na.string="",
                       row.names="compound")
 
-if(type=="FB") {
+if(type %in% c("initialequilibrium","gasphasecomp")) {
 
   init.allspec <- 1e-5  # ppb
   
+###_ . input concentrations
+
   Strip <- function(x,char="[ ;]*")
     gsub(sprintf("^%s|%s$",char,char),"",x)
 
@@ -36,21 +52,25 @@ if(type=="FB") {
     x <- Strip(x)
     setNames(x[2],x[1])
   }
-
-###_ . [FB] input concentrations  
-  inp <- sapply(strsplit(readLines(file.path(inputrun,"cgas_init.def")),
+  
+  inp <- sapply(strsplit(readLines(toupper(file.path(inputrun,"cgas_init.def"))),
                          "[ ]?=[ ]?"),Convert)
 
-###_ . [FB] create concentration vector  
+###_ . create concentration vector  
   conc <- setNames(rep(init.allspec,nrow(props)),row.names(props))
   inp <- inp[intersect(names(inp),names(conc))]
   conc[names(inp)] <- as.numeric(inp)
 
-###_ . [FB] calculate a0 (mole fractions)
-  a0 <- conc/(props$p0*cfactor)
-  a0 <- a0/sum(a0)
+###_ . calculate a0 (mole fractions)
 
-} else if(type=="GAS") {
+  if(type=="initialequilibrium") {
+    a0 <- conc/(props$p0*cfactor)
+    a0 <- a0/sum(a0)
+  } else if(type=="gasphasecomp") {
+    a0 <- conc/sum(conc)
+  }
+
+} else if(type=="recycledseed") {
 
   Partition <- function(p,p0) {
     ## p, p0: in units of ppb
@@ -58,15 +78,27 @@ if(type=="FB") {
     excess/sum(excess)
   }
 
-###_ . [GAS] input concentrations    
+###_ . input concentrations    
   inp <- unlist(tail(read.csv(file.path(inputrun,"gas",sprintf("%s_formatted.csv",root)),
                               row.names="TIME"),1))
 
-###_ . [GAS] create concentration vector
+###_ . create concentration vector
   conc <- inp[row.names(props)]
 
-###_ . [GAS] calculate a0 (mole fractions)
+###_ . calculate a0 (mole fractions)
   a0 <- Partition(conc,props$p0*cfactor)
+  
+} else if(type=="purecomponent") {
+
+  a0 <- setNames(rep(1,nrow(props)),row.names(props))
+  
+} else if(type=="infinitesink") {
+
+  a0 <- setNames(rep(0,nrow(props)),row.names(props))  
+
+} else if(type=="equalcomponent") {
+
+  a0 <- setNames(rep(1/nrow(props),nrow(props)),row.names(props))
   
 }
 
@@ -79,6 +111,6 @@ out <- out[order(out$index),]
 
 ## write to file
 outfile <- file.path(outputrun,a0file)
-cat("#FBinit\n",file=outfile)
+cat(paste0("#",type,"\n"),file=outfile)
 write.table(out,outfile,append=TRUE,sep="\t",quote=FALSE,
             col.names=FALSE,row.names=FALSE)
