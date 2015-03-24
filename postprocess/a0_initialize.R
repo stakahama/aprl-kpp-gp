@@ -20,7 +20,8 @@ if( !type %in% c("purecomponent",
                  "equalcomponent",
                  "initialequilibrium",
                  "gasphasecomp",
-                 "recycledseed") )
+                 "recycledseed",
+                 "extrasolventinit") )
   stop("--- not valid 'type' ---")
 
 ###_* other values ====================
@@ -39,7 +40,7 @@ compounds <- read.csv("compound_indices_table.csv",
                       na.string="",
                       row.names="compound")
 
-if(type %in% c("initialequilibrium","gasphasecomp")) {
+if(type %in% c("initialequilibrium","gasphasecomp","extrasolventinit")) {
 
   init.allspec <- 1e-5  # ppb
   
@@ -53,7 +54,7 @@ if(type %in% c("initialequilibrium","gasphasecomp")) {
     setNames(x[2],x[1])
   }
   
-  inp <- sapply(strsplit(readLines(toupper(file.path(inputrun,"cgas_init.def"))),
+  inp <- sapply(strsplit(toupper(readLines(file.path(inputrun,"cgas_init.def"))),
                          "[ ]?=[ ]?"),Convert)
 
 ###_ . create concentration vector  
@@ -68,6 +69,19 @@ if(type %in% c("initialequilibrium","gasphasecomp")) {
     a0 <- a0/sum(a0)
   } else if(type=="gasphasecomp") {
     a0 <- conc/sum(conc)
+  } else if(type=="extrasolventinit") {
+    Navogadro <- 6.02214129e23
+    conversion <- c(Navogadro*1e-12,    # microg=>g, m^3=>cm^3
+                    1/0.08206*1/298.15) # ppb to microg/m^3 (x MW)
+    masstable <- read.table("mcm_apinene_mass.txt",skip=18,
+                            col.names=c("compound","SMILES","InChI","molwt"),
+                            row.names="compound")
+    COA <- scan(file.path(inputrun,"input_partitioning.txt"),0,n=1)
+    mean.molwt <- sum(conc*masstable[names(conc),"molwt"])/sum(conc)
+    Mconc <- conc*masstable[names(conc),"molwt"]*conversion[2]
+    Nconc <- Mconc/masstable[names(conc),"molwt"]*conversion[1]
+    Nsolvent <- COA/mean.molwt*conversion[1]-sum(Nconc)
+    a0 <- Nconc/(Nsolvent+Nconc)
   }
 
 } else if(type=="recycledseed") {

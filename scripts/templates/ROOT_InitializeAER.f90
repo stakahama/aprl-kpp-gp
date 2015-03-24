@@ -160,10 +160,10 @@ contains
           CAER_total_molec_cm3 = CAER_total_molec_cm3 + CAER(iOrg)
        end do
        mean_molecular_mass_of_organics = sum(CAER*molecular_masses*ORGMASK)/CAER_total_molec_cm3
-       if(absorptive_mode .gt. 0) then
-          CAER_ghost_molec_cm3 = 0.d0
-       else 
+       if(absorptive_mode .eq. 0) then
           CAER_ghost_molec_cm3 = (CAER0_total_microg_m3/mean_molecular_mass_of_organics*Avogadro*1.d-12)-CAER_total_molec_cm3
+       else if(absorptive_mode .gt. 0) then
+          CAER_ghost_molec_cm3 = 0.d0
        end if
        xorgaer_init = CAER/CAER_total_molec_cm3
        !

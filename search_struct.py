@@ -33,7 +33,8 @@ args['TMPFILE'] = 'tmp_SMILES.csv'
 args['SEARCHEXE'] = os.path.join(args['PROGPATH'],'substructure_search.py')
 
 env = os.environ.copy()
-env['PATH'] = '{}:{}'.format(scriptspath,env['PATH'])
+utilpath = os.path.join(os.path.dirname(__file__),'util')
+env['PATH'] = '{}:{}'.format(utilpath,env['PATH'])
 
 ###_* -------------------- fragments --------------------
 
