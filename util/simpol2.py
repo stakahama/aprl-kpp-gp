@@ -13,6 +13,7 @@
 from collections import OrderedDict
 import pandas as pd
 import numpy as np
+import sys
 
 class SimpolClass:
 
@@ -121,13 +122,16 @@ class SimpolClass:
                              index=index,
                              columns=['p0','DeltaH'])
         for idx in index:
-            abundances = compounds.ix[idx].values
+            abundances = compounds.ix[idx,simp.table['groups']].values # preserve order of abundances
             props.ix[idx,'p0'] = p0_atm(abundances,temp)
             props.ix[idx,'DeltaH'] = deltaHvap_kJpermol(abundances,temp)
         return props
 
     def read_compounds(self,filename):
-        self.compounds = pd.read_csv(filename).set_index('compound')
+        compounds = pd.read_csv(filename)
+        if compounds.shape[0] > compounds.drop_duplicates().shape[0]:
+            sys.exit('USER ERROR: duplicate rows in input matrix')
+        self.compounds = compounds.set_index('compound')
 
 if __name__=='__main__':
 

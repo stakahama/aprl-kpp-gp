@@ -10,7 +10,6 @@
 ## USAGE:
 ## $ python /path/to/build_dual.py {ROOT} {LIGHT} {CPATH}
 ## {ROOT} = KPP root
-## {LIGHT} = photolysis file {original|dark|light}
 ## {CPATH} = compound path
 ##
 ## EXAMPLE:

@@ -34,8 +34,12 @@ args = dict(vars(parser.parse_args()))
 
 ###_* -------------------- define paths --------------------
 
+a0file = 'molefrac_init.txt'
+
 args['MAINPATH'] = os.path.dirname(__file__)
 HERE = os.getcwd()
 paths = OrderedDict([(p, os.path.join(HERE,'exec_'+p))  for p in ['gas','total']])
 
 ###_* -------------------- calculate partitioning --------------------
+
+exit()
