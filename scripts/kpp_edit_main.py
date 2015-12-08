@@ -39,6 +39,7 @@ class MainDriver:
                 for line in finp:
                     fout.write(line)
                     if 'CALL InitSaveData()' in line:
+                        fout.write(addstatement('CALL InitSaveDataIrr()',6))
                         fout.write(addstatement('CALL InitializeAER()',6))
                         fout.write(addstatement('CALL InitSaveDataAER()',6))
                         break
@@ -47,6 +48,7 @@ class MainDriver:
                 for line in finp:
                     if 'CALL SaveData()' in line:
                         accum += line
+                        accum += addstatement('CALL SaveDataIrr()',8)
                         accum += addstatement('CALL SaveDataAER()',8)
                         continue
                     elif 'END DO kron' in line:
@@ -59,6 +61,8 @@ class MainDriver:
                 for line in finp:
                     fout.write(line)
                     if 'CALL CloseSaveData()' in line:
+                        fout.write(addstatement('CALL SaveDataIrr()',6))
+                        fout.write(addstatement('CALL CloseSaveDataIrr()',6))
                         fout.write(addstatement('CALL SaveDataAER()',6))
                         fout.write(addstatement('CALL CloseSaveDataAER()',6))
         os.rename(newfile,filename)

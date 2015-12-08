@@ -25,9 +25,9 @@ class InitModify:
         self.root = root
 
         self.module_aer = '''
-    USE apinene_GlobalAER, only: CAER0_total_microg_m3, &
+    USE {ROOT}_GlobalAER, only: CAER0_total_microg_m3, &
          integratorcheck, partitioning_mode, absorptive_mode, minconc, mf
-'''
+'''.format(ROOT=self.root)
 
         self.declaration_gas = '''
     REAL(kind=dp)      :: minconc             ! FB

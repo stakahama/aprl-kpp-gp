@@ -20,6 +20,7 @@ from kpp_generate_SIMPOLGroups import kppParameters
 import subprocess
 import argparse
 import pandas as pd
+import distutils.spawn
 
 ###_* -------------------- accept arguments --------------------
 
@@ -32,6 +33,12 @@ args['SCRIPTSPATH'] = scriptspath
 args['TMPFILE'] = 'tmp_SMILES.csv'
 args['SEARCHEXE'] = os.path.join(args['PROGPATH'],'substructure_search.py')
 
+## added 30.07.2015
+progpath = os.path.dirname(distutils.spawn.find_executable('substructure_search.py')) \
+           if args['PROGPATH']=='' else args['PROGPATH']
+args['EXPORTVARS'] = os.path.join(progpath,'SMARTSpatterns','SIMPOLexportlist.csv')
+##
+
 env = os.environ.copy()
 utilpath = os.path.join(os.path.dirname(__file__),'util')
 env['PATH'] = '{}:{}'.format(utilpath,env['PATH'])
@@ -42,8 +49,8 @@ kpar = kppParameters(None)
 kpar.read_smiles_table('mcm_{ROOT}_mass.txt'.format(**args))
 
 kpar.smiles['SMILES'].reset_index().to_csv(args['TMPFILE'],index=False)
-subprocess.call('{SEARCHEXE} -d -g SIMPOLgroups.csv -i {TMPFILE} -o {ROOT}_SIMPOLGroups.csv'.format(**args), shell=True)
-subprocess.call('{SEARCHEXE} -d -g FTIRgroups.csv -i {TMPFILE} -o {ROOT}_FTIRGroups.csv'.format(**args), shell=True)
+subprocess.call('{SEARCHEXE} -d -g SIMPOLgroups.csv -i {TMPFILE} -o {ROOT}_SIMPOLGroups.csv -e {EXPORTVARS}'.format(**args), shell=True)
+subprocess.call('{SEARCHEXE} -d -g MCMgroups.csv -i {TMPFILE} -o {ROOT}_FTIRGroups.csv'.format(**args), shell=True)
 os.remove(args['TMPFILE'])
 
 ## ###_* -------------------- merge --------------------

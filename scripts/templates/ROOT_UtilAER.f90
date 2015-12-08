@@ -77,6 +77,54 @@ contains
 
     END SUBROUTINE CloseSaveDataAER
 
+
+! ****************************************************************
+!                            
+! IRR subroutines for Integrated Reaction Rate
+!   Parameters :                                                  
+!
+! ****************************************************************
+    
+    ! open/init save    
+    SUBROUTINE InitSaveDataIrr ()
+
+      USE apinene_Parameters
+      USE apinene_Monitor
+
+      INTEGER i
+
+      OPEN(11, file='{ROOT}_irr.dat')
+
+      WRITE(11,908) 'TIME',  &
+           (i, i=1,NREACT)
+908   FORMAT(A25,1000(1X,i25))
+
+    END SUBROUTINE InitSaveDataIrr
+
+    ! save 
+    SUBROUTINE SaveDataIrr ()
+
+      USE apinene_Global
+      USE apinene_Monitor
+
+      INTEGER i
+
+      WRITE(11,909) (TIME-TSTART)/3600.D0,  &
+           (IRR(i), i=1,NREACT)
+      IRR(:) = 0.
+909   FORMAT(ES25.16E3,1000(1X,ES25.16E3))
+      
+    END SUBROUTINE SaveDataIrr
+
+    ! close     
+    SUBROUTINE CloseSaveDataIrr ()
+      ! modules
+      USE {ROOT}_Parameters
+      ! body
+      CLOSE(11)
+
+    END SUBROUTINE CloseSaveDataIrr
+    
 ! -----
 
 end module {ROOT}_UtilAER
