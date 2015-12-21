@@ -122,7 +122,7 @@ class SimpolClass:
                              index=index,
                              columns=['p0','DeltaH'])
         for idx in index:
-            abundances = compounds.ix[idx,simp.table['groups']].values # preserve order of abundances
+            abundances = compounds.ix[idx,self.table['groups']].values # preserve order of abundances
             props.ix[idx,'p0'] = p0_atm(abundances,temp)
             props.ix[idx,'DeltaH'] = deltaHvap_kJpermol(abundances,temp)
         return props

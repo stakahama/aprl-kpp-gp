@@ -63,7 +63,8 @@ files = {
         ],
     'dat':[
         '{ROOT}.dat'.format(**args),
-        '{ROOT}_aer.dat'.format(**args)
+        '{ROOT}_aer.dat'.format(**args),
+        '{ROOT}_irr.dat'.format(**args)
         ]
     }
 
@@ -141,7 +142,7 @@ for label,p in paths.items():
             continue
         dst = os.path.join(outpath,f)
         os.rename(f,dst)
-        if f in files['dat']:
+        if f in files['dat'] and '_irr.dat' not in f:
             # create formatted file
             subprocess.call('format_output.py '+dst, shell=True, env=env)
     ## clean 
