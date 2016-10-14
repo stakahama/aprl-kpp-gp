@@ -1,4 +1,4 @@
-APRL KPP G/P module
+APRL KPP G/P module [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.160810.svg)](https://doi.org/10.5281/zenodo.160810)
 ===
 
 This program generates a gas-phase chemical kinetic model using the Kinetic Pre-Processor (KPP) [1][2] with the Master Chemical Mechanism (MCM) [3], and adds dynamic gas/particle (G/P) partitioning with vapor pressure estimation from the SIMPOL.1 group contribution model [4]. Further details are provided by Ruggeri *et al.* [5].
