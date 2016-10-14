@@ -1,5 +1,16 @@
 #!/usr/bin/env python
 
+################################################################################
+## build a table for input parameters from simulations
+##
+## ~harvest_parms.py~
+##
+## satoshi.takahama@epfl.ch
+##
+## license: GNU Public License v3.0 (LICENSE_GPLv3.txt)
+##
+################################################################################
+
 ###_* -------------------- import libraries --------------------
 import os
 import re
@@ -29,7 +40,8 @@ mech = os.path.basename(HERE)
 input_files = {
     'input_time.txt':('TSTART','DURATION','DT'),
     'input_temp.txt':('TEMP','CFACTOR'),
-    'input_partitioning.txt':('M0','PARTITIONING_MODE','ABSORPTIVE_MODE','INTEGRATORCHECK','MINCONC','MF')
+    'input_partitioning.txt':('M0','PARTITIONING_MODE','ABSORPTIVE_MODE',
+                              'INTEGRATORCHECK','MINCONC','MF','NCONC','DIAM_SEED')
     }
 
 ###_* -------------------- define functions --------------------
@@ -128,9 +140,14 @@ for runpath in runs:
     if master.empty:
         master = parmstable
     else:
-        master = master.merge(parmstable,how='outer')        
+        master = master.merge(parmstable,how='outer')
 
 
 ###_* -------------------- export --------------------
 
-master.to_csv('parameter_table.csv',index=False)
+master_wf = master.pivot_table(values='VALUE',
+                               index=['MECHANISM','RUN'],
+                               columns='PARAMETER',
+                               aggfunc=lambda x: x)
+
+master_wf.to_csv('parameter_table.csv',index=False)

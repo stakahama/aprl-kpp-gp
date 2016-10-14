@@ -6,6 +6,8 @@
 ## S. Takahama (satoshi.takahama@epfl.ch)
 ## June 2014
 ##
+## license: GNU Public License v3.0 (LICENSE_GPLv3.txt)
+##
 ################################################################################
 
 import os
@@ -59,7 +61,7 @@ constants.o: kpp_constants.f90
             ## add constants.o to rates
                 for line in finp:
                     if '_Rates.o:' not in line:
-                        fout.write(line)                        
+                        fout.write(line)
                     else:
                         fout.write(replrates(line))
                         break

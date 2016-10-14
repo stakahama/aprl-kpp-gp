@@ -9,6 +9,8 @@
 ## S. Takahama and F.Bernhard 02.01.15 in order to generate
 ## additionally molecular masses
 ##
+## license: GNU Public License v3.0 (LICENSE_GPLv3.txt)
+##
 ################################################################################
 
 ###_* -------------------- import libraries --------------------
@@ -32,7 +34,7 @@ smilesfile = args.SMILESfile
 mode = args.mode
 
 ###_* -------------------- read {root}_Parameters.f90 --------------------
-parms = kppParameters(root)    
+parms = kppParameters(root)
 parms.read_parms()                                  #-> parms.ind
 compounds = OrderedDict(map(reversed,parms.ind))    # should be sorted
 compounds_table = pd.DataFrame(compounds.items(),columns=['compound','index']).set_index('compound')
@@ -64,7 +66,7 @@ def write_vector_f90(fout,label,vector,indent,nmaxline):
     fout.write('/)'+'\n')
 
 ###_ . compounds table
-    
+
 ## output of compound names and indices (useful for preparing initial concentrations, mole fractions)
 if mode < 2:
     compounds_table.reset_index().to_csv('compound_indices_table.csv',index=False)

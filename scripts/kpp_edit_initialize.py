@@ -10,6 +10,8 @@
 ## S. Takahama (satoshi.takahama@epfl.ch)
 ## June 2014
 ##
+## license: GNU Public License v3.0 (LICENSE_GPLv3.txt)
+##
 ################################################################################
 
 import os
@@ -26,14 +28,15 @@ class InitModify:
 
         self.module_aer = '''
     USE {ROOT}_GlobalAER, only: CAER0_total_microg_m3, &
-         integratorcheck, partitioning_mode, absorptive_mode, minconc, mf
+         integratorcheck, partitioning_mode, absorptive_mode, minconc, mf, &
+         nr_aerosol_particles, d_ve_seed, mean_molecular_mass_of_organics
 '''.format(ROOT=self.root)
 
         self.declaration_gas = '''
     REAL(kind=dp)      :: minconc             ! FB
 '''
 
-        
+
         self.declaration = '''
     integer            :: filestat            ! ST
     logical            :: existp              ! ST
@@ -41,11 +44,11 @@ class InitModify:
     REAL(kind=dp)      :: CFACTOR_NEW=1.D0    ! ST
     REAL(kind=dp)      :: CFACTOR_RATIO=1.D0  ! ST
     integer            :: ix                  ! ST
-    REAL(kind=dp)      :: conc                ! ST    
+    REAL(kind=dp)      :: conc                ! ST
 '''
 
         self.define_inputs = '''
-        
+
 ! define input.txt formats for inputs
 110 format (f9.0)
 111 format (i9)
@@ -58,32 +61,37 @@ class InitModify:
     minconc = 1.0D-5*CFACTOR
 '''
 
-        self.read_aer = '''        
+        self.read_aer = '''
     ! partitioning (required)
     write(*,*) "using parameters from ", "input_partitioning.txt"
     open (unit=15, file="input_partitioning.txt", status="old",    &
          access="sequential", form="formatted", action="read")
 
     ! read in defaults defined in input.txt
-    read (15, 113)  CAER0_total_microg_m3   !initial aerosol concentration
+    read (15, 113)  CAER0_total_microg_m3   ![ug m^-3] initial aerosol concentration
     read (15, 111)  partitioning_mode       !0=off; 1=on
-    read (15, 111)  absorptive_mode         !0=off; 1=on    
+    read (15, 111)  absorptive_mode         !0=off; 1=on
     read (15, 111)  integratorcheck         !0=off; 1=on
     read (15, 113)  minconc                 !minimum concentration (zero value) [ppb]
     read (15, 111)  mf                      !LSODE Jacobian option (10, 21, 22)
-    
+    read (15, 113)  nr_aerosol_particles    ![m^-3] fixed number concentration
+    read (15, 113)  d_ve_seed               ![m] seed aerosol size
+    read (15, 113)  mean_molecular_mass_of_organics    ![g cm^-3] molecular weight of solvent
+
     close(15)
     ! echo
     write(*,*) "read from file: ", "input_partitioning.txt"
     write(*,*) "read in values: ", &
          "total initial CAER [microg/m3]: ", CAER0_total_microg_m3, &
          "partitioning_mode: ", partitioning_mode, &
-         "absorptive_mode: ", absorptive_mode, &         
+         "absorptive_mode: ", absorptive_mode, &
          "integratorcheck: ", integratorcheck, &
-         "minconc: ", minconc, &          
-         "mf: ", mf         
+         "minconc: ", minconc, &
+         "mf: ", mf, &
+         "nr_aerosol_particles: ", nr_aerosol_particles, &
+         "d_ve_seed: ", d_ve_seed
 
-    minconc = minconc*CFACTOR         
+    minconc = minconc*CFACTOR
 '''
         self.read_optional = '''
     ! overwrite time (optional)
@@ -104,9 +112,9 @@ class InitModify:
        write(*,*) "read in: ", &
             "TSTART: ", TSTART, &
             "DURATION: ", DURATION, &
-            "DT: ", DT 
+            "DT: ", DT
     endif
-        
+
     ! overwrite initial concentrations
     inquire(file="cgas_init.txt", exist=existp)
     if (existp) then
@@ -117,7 +125,7 @@ class InitModify:
           if (filestat /= 0) exit
           if (ix .eq. 0) then
              H2O = conc
-          else       
+          else
              VAR(ix) = conc*CFACTOR
           endif
        end do
@@ -180,7 +188,7 @@ class InitModify:
                     fout.write(line)
                     if 'End INLINED initializations' in line:
                         fout.write(self.define_inputs)
-                        fout.write(self.minconc)                        
+                        fout.write(self.minconc)
                         if mode:
                             fout.write(self.read_aer)
                         fout.write(self.read_optional)

@@ -8,6 +8,9 @@
 ##
 ## Sep. 2013
 ## Satoshi Takahama (satoshi.takahama@epfl.ch)
+##
+## license: GNU Public License v3.0 (LICENSE_GPLv3.txt)
+##
 ################################################################################
 
 from collections import OrderedDict
@@ -83,7 +86,7 @@ class SimpolClass:
                 2.66889E-01
                 ])
             ]
-        
+
         self.table = pd.DataFrame.from_dict(OrderedDict(table5))
 
     def get_groupnames(self):

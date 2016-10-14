@@ -45,6 +45,27 @@
 
   real(kind=dp)                      :: minconc
 
+  
+  ! dynamic parameters
+  real(kind=dp), parameter        :: alpha=1.d0            ! [ ] mass accommodation coefficient
+  real(kind=dp), parameter        :: lambda=2.d-8          ! [m] mean free path
+  real(kind=dp), parameter        :: rho_p=1.5d0           ! [g cm^-3] SOA density, Kostenidou et al. (2007)  
+  real(kind=dp), dimension(NSPEC), parameter :: Diff_coeff=5.d-6      ! [m^2/s] diffusion coeff. of organic species in air
+!!$  real(kind=dp)                   :: d_ve_aerosols ! [m] volume-equivalent diameter of the particles
+  real(kind=dp)                   :: d_ve_seed     ! [m] volume-equivalent diameter of seed
+  real(kind=dp)                   :: nr_aerosol_particles
+  real(kind=dp)                   :: mean_molecular_mass_of_organics
+  
+!!$  nr_aerosol_particles, d_ve_seed are set in 'input_partitioning.txt'
+  
+!!$ Note mappings among arrays:  
+!!$  x: CGAS(NSPEC), CAER(NSPEC), VPAER(NSPEC)
+!!$  y: Cstar(NorganicSPEC), gammaf(NorganicSPEC)
+!!$  do i=1,NorganicSPEC
+!!$     iOrg=organic_selection_indices(i)
+!!$     y(i)=fn(x(iOrg))
+!!$  end do
+
 contains
 
   subroutine print_organic_aerosol_mass()
@@ -100,5 +121,28 @@ contains
     end if
     !
   end subroutine calc_aerosol_molefrac
+
+  function dp_from_mass(org_mass) result(diam)
+    real(kind=dp), intent(in) :: org_mass
+    real(kind=dp) :: diam
+    ! org_mass = nr_aerosol_particles * rho_p * pi/6 * (diam**3 - diam_seed**3)
+    diam = (org_mass / (nr_aerosol_particles*rho_p*pi_constant/6.d0) * 1.d-12 &
+         + d_ve_seed**3.d0)**(1.d0/3.d0)
+    end function dp_from_mass
+  
+  function calc_prefix(d_ve_aerosols,diff_coeff) result(gamma)
+    real(kind=dp), intent(in) :: d_ve_aerosols
+    real(kind=dp), intent(in) :: diff_coeff
+    real(kind=dp)             :: gamma
+    ! local vars:
+    real(kind=dp)             :: Kn
+    real(kind=dp)             :: f_a_Kn !FB: func(alpha, Knudsen-number)
+    !
+    Kn = 2.d0*lambda/d_ve_aerosols
+    f_a_Kn = 0.75d0*alpha*(1 + Kn)/(Kn*Kn + Kn + 0.283d0*Kn*alpha + 0.75d0*alpha)
+    !
+    gamma = -2.d0*pi_constant*nr_aerosol_particles*d_ve_aerosols*f_a_Kn*diff_coeff
+    !
+  end function calc_prefix
 
 end module {ROOT}_GlobalAER

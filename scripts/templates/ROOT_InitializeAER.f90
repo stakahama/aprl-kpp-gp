@@ -13,7 +13,7 @@ contains
     use {ROOT}_GlobalAER, only : CAER, VPAER, NorganicSPEC, &
          molecular_masses, orgmask, organic_selection_indices, &
          CAER0_total_microg_m3, CAER_total_microg_m3, CAER_total_molec_cm3, &
-         Cstar, gammaf, pi_constant, &
+         Cstar, gammaf, mean_molecular_mass_of_organics, &
          calc_aerosol_conc, absorptivep, absorptive_mode, &
          xorgaer_init, epsilon, CAER_ghost_molec_cm3, Avogadro, &
          ! DLSODE
@@ -34,20 +34,19 @@ contains
     !
     real(dp)                    :: molefrac
     real(dp), dimension(NSPEC)  :: a0
-    real(dp)                    :: mean_molecular_mass_of_organics !FB: to convert initial amount of aerosol from µg/m3 to molecules/cm3
     !
     integer, dimension(ngroups) :: abundance
     real(dp)                    :: vp_atm=0.d0
 
     ! body
     ! -------------------- FIXED PARAMETERS --------------------
-    Diff_coeff = 5.d-6          ! [m^2/s] diffusion coeff. of organic species in air
-    nr_aerosol_particles = 5.d9 ! [m^-3] particle number concentration
-    d_ve_aerosols = 100.d-9     ! [m] volume-equivalent diameter of the particles
-    alpha = 1.d0
-    lambda = 2.d-8              ! [m] mean free path
-    Kn = 2.d0*lambda/d_ve_aerosols
-    f_a_Kn = 0.75d0*alpha*(1 + Kn)/(Kn*Kn + Kn + 0.283d0*Kn*alpha + 0.75d0*alpha)
+!!$    Diff_coeff = 5.d-6          ! [m^2/s] diffusion coeff. of organic species in air
+!!$    nr_aerosol_particles = 5.d9 ! [m^-3] particle number concentration
+!!$    d_ve_aerosols = 100.d-9     ! [m] volume-equivalent diameter of the particles
+!!$    alpha = 1.d0
+!!$    lambda = 2.d-8              ! [m] mean free path
+!!$    Kn = 2.d0*lambda/d_ve_aerosols
+!!$    f_a_Kn = 0.75d0*alpha*(1 + Kn)/(Kn*Kn + Kn + 0.283d0*Kn*alpha + 0.75d0*alpha)
     ! ------------------------------------------------------------    
 
     ! -------------------- VPAER from SIMPOL calculations --------------------
@@ -111,7 +110,8 @@ contains
     do i=1,NorganicSPEC
        iOrg = organic_selection_indices(i)
        Cstar(i) = press2conc(TEMP,VPAER(iOrg)) ! [molec/cm^3]
-       gammaf(i) = -2.d0*pi_constant*nr_aerosol_particles*d_ve_aerosols*f_a_Kn*Diff_coeff(iOrg);
+       !gammaf(i) = calc_prefix(dp_from_mass(CAER0_total_microg_m3),Diff_coeff(iOrg))
+       gammaf(i) = 0.d0 ! just initialize
     end do
     ! ------------------------------------------------------------    
 
@@ -152,14 +152,16 @@ contains
     else
        ! self-starting
        absorptivep = .TRUE.
+!!$       mean_molecular_mass_of_organics = 250.d0
        CAER = 0.d0
        CAER_total_molec_cm3 = 0.d0
        do i=1,NorganicSPEC
           iOrg = organic_selection_indices(i)
-          CAER(iOrg) = CAER0_total_microg_m3*CGAS(iOrg)/CSTAR(i)/molecular_masses(iOrg)*Avogadro*1.d-12
+          !CAER(iOrg) = CAER0_total_microg_m3*CGAS(iOrg)/CSTAR(i)/molecular_masses(iOrg)*Avogadro*1.d-12
+          CAER(iOrg) = CAER0_total_microg_m3*CGAS(iOrg)/CSTAR(i)/mean_molecular_mass_of_organics*Avogadro*1.d-12
           CAER_total_molec_cm3 = CAER_total_molec_cm3 + CAER(iOrg)
        end do
-       mean_molecular_mass_of_organics = sum(CAER*molecular_masses*ORGMASK)/CAER_total_molec_cm3
+       !mean_molecular_mass_of_organics = sum(CAER*molecular_masses*ORGMASK)/CAER_total_molec_cm3
        if(absorptive_mode .eq. 0) then
           CAER_ghost_molec_cm3 = (CAER0_total_microg_m3/mean_molecular_mass_of_organics*Avogadro*1.d-12)-CAER_total_molec_cm3
        else if(absorptive_mode .gt. 0) then

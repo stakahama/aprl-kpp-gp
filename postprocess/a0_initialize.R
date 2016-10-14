@@ -1,5 +1,13 @@
 #!/usr/bin/Rscript
 
+################################################################################
+##
+## initialize seed aerosol composition
+## satoshi.takahama@epfl.ch
+## license: GNU Public License v3.0 (LICENSE_GPLv3.txt)
+##
+################################################################################
+
 ###_* inputs ====================
 
 ## root <- "apinene"
@@ -43,7 +51,7 @@ compounds <- read.csv("compound_indices_table.csv",
 if(type %in% c("initialequilibrium","gasphasecomp","extrasolventinit")) {
 
   init.allspec <- 1e-5  # ppb
-  
+
 ###_ . input concentrations
 
   Strip <- function(x,char="[ ;]*")
@@ -53,11 +61,11 @@ if(type %in% c("initialequilibrium","gasphasecomp","extrasolventinit")) {
     x <- Strip(x)
     setNames(x[2],x[1])
   }
-  
+
   inp <- sapply(strsplit(toupper(readLines(file.path(inputrun,"cgas_init.def"))),
                          "[ ]?=[ ]?"),Convert)
 
-###_ . create concentration vector  
+###_ . create concentration vector
   conc <- setNames(rep(init.allspec,nrow(props)),row.names(props))
   inp <- inp[intersect(names(inp),names(conc))]
   conc[names(inp)] <- as.numeric(inp)
@@ -92,7 +100,7 @@ if(type %in% c("initialequilibrium","gasphasecomp","extrasolventinit")) {
     excess/sum(excess)
   }
 
-###_ . input concentrations    
+###_ . input concentrations
   inp <- unlist(tail(read.csv(file.path(inputrun,"gas",sprintf("%s_formatted.csv",root)),
                               row.names="TIME"),1))
 
@@ -101,19 +109,19 @@ if(type %in% c("initialequilibrium","gasphasecomp","extrasolventinit")) {
 
 ###_ . calculate a0 (mole fractions)
   a0 <- Partition(conc,props$p0*cfactor)
-  
+
 } else if(type=="purecomponent") {
 
   a0 <- setNames(rep(1,nrow(props)),row.names(props))
-  
+
 } else if(type=="infinitesink") {
 
-  a0 <- setNames(rep(0,nrow(props)),row.names(props))  
+  a0 <- setNames(rep(0,nrow(props)),row.names(props))
 
 } else if(type=="equalcomponent") {
 
   a0 <- setNames(rep(1/nrow(props),nrow(props)),row.names(props))
-  
+
 }
 
 ###_* export ====================

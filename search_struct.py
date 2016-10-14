@@ -8,6 +8,8 @@
 ##
 ## satoshi.takahama@epfl.ch
 ##
+## license: GNU Public License v3.0 (LICENSE_GPLv3.txt)
+##
 ################################################################################
 
 ###_* -------------------- import libraries --------------------

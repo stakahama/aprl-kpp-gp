@@ -6,6 +6,8 @@
 ## S. Takahama (satoshi.takahama@epfl.ch)
 ## June 2014
 ##
+## license: GNU Public License v3.0 (LICENSE_GPLv3.txt)
+##
 ################################################################################
 
 import os
@@ -29,16 +31,16 @@ AEROBJ = simpol_module.o \
 	 {ROOT}_SIMPOLGroups.o \
          opkdmain.o \
          opkda1.o \
-         opkda2.o     
+         opkda2.o
 ## end ST
 '''.format(ROOT=self.root)
 
         self.dotofiles = '''
 ## ST
-{ROOT}_GlobalAER.o: {ROOT}_GlobalAER.f90 $(GENOBJ) 
+{ROOT}_GlobalAER.o: {ROOT}_GlobalAER.f90 $(GENOBJ)
 	$(FC) $(FOPT) -x f95-cpp-input -c $<
 
-{ROOT}_InitializeAER.o: {ROOT}_InitializeAER.f90 $(GENOBJ) {ROOT}_GlobalAER.o {ROOT}_SIMPOLGroups.o 
+{ROOT}_InitializeAER.o: {ROOT}_InitializeAER.f90 $(GENOBJ) {ROOT}_GlobalAER.o {ROOT}_SIMPOLGroups.o
 	$(FC) $(FOPT) -x f95-cpp-input -c $<
 
 {ROOT}_UtilAER.o: {ROOT}_UtilAER.f90 $(GENOBJ) $(UTLOBJ) {ROOT}_GlobalAER.o
@@ -47,7 +49,7 @@ AEROBJ = simpol_module.o \
 {ROOT}_PartitionAER.o: {ROOT}_PartitionAER.f90 $(GENOBJ) {ROOT}_GlobalAER.o
 	$(FC) $(FOPT) -x f95-cpp-input -c $<
 
-{ROOT}_SIMPOLGroups.o: {ROOT}_SIMPOLGroups.f90 
+{ROOT}_SIMPOLGroups.o: {ROOT}_SIMPOLGroups.f90
 	$(FC) $(FOPT) -x f95-cpp-input -c $<
 
 constants.o: kpp_constants.f90
@@ -56,7 +58,7 @@ constants.o: kpp_constants.f90
 simpol_module.o: simpol_module.f90
 	$(FC) $(FOPT) -x f95-cpp-input -c $<
 
-opkdmain.o: opkdmain.f 
+opkdmain.o: opkdmain.f
 	$(FC) $(FOPT) -x f77-cpp-input -c $<
 
 opkda1.o: opkda1.f
@@ -116,7 +118,7 @@ opkda2.o: opkda2.f
             ## add constants.o to rates
                 for line in finp:
                     if '_Rates.o:' not in line:
-                        fout.write(line)                        
+                        fout.write(line)
                     else:
                         fout.write(replrates(line))
                         break

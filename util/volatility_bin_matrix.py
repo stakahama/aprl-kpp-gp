@@ -8,6 +8,8 @@
 ##
 ## satoshi.takahama@epfl.ch
 ##
+## license: GNU Public License v3.0 (LICENSE_GPLv3.txt)
+##
 ################################################################################
 
 ###_* -------------------- import libraries --------------------
@@ -34,7 +36,7 @@ def atm2massc(atm, molwt, temp=298.15, press=1):
 def create_binmatrix(c0,bmin=-5,bmax=11,bwidth=1):
     ##
     logbins = np.arange(bmin,bmax+1,bwidth)
-    bwidth = float(bwidth)    
+    bwidth = float(bwidth)
     ##
     binmatrix = np.zeros((len(c0),len(logbins)),dtype=int)
     for i in range(len(logbins)):

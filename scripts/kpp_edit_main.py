@@ -6,6 +6,8 @@
 ## S. Takahama (satoshi.takahama@epfl.ch)
 ## June 2014
 ##
+## license: GNU Public License v3.0 (LICENSE_GPLv3.txt)
+##
 ################################################################################
 
 import os

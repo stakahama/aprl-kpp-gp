@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 This script
-1) adds stoichiometric equations to orgainc compounds
+1) adds stoichiometric equations to organic compounds
 2) fixes equation syntax (exponential equations)
 3) removes inorganic compounds (they are handled through inorganic.kpp)
 4) dos2unix
@@ -16,6 +16,7 @@ output of this file and editkpp.py+dos2unix are identical according to 'diff -q'
 Created on Mon Aug 11 16:49:52 2014
 Edited Feb 2015
 @author: shipley, stakahama
+license: GNU Public License v3.0 (LICENSE_GPLv3.txt)
 """
 
 ###_* -------------------- import libraries --------------------
@@ -122,7 +123,7 @@ with open(kppfile,'r') as finp:
                 fout.write(line)
                 break
             fout.write(line)
-        ## --- add species stoichiometry ---            
+        ## --- add species stoichiometry ---
         for line in finp:
             line = line.replace('\r\n','\n')
             if '#INLINE F90_RCONST' in line:

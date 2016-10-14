@@ -6,6 +6,8 @@
 ## S. Takahama (satoshi.takahama@epfl.ch)
 ## June 2014
 ##
+## license: GNU Public License v3.0 (LICENSE_GPLv3.txt)
+##
 ################################################################################
 
 import os
@@ -26,7 +28,7 @@ parser.add_argument('SMILESfile',type=str)
 parser.add_argument('SMARTSfile',type=str)
 
 class kppParameters:
-    
+
     def __init__(self,root,path='.'):
         ## prefix is the value of ROOT used as example in KPP
         ##   manuscript by Sandu
@@ -35,7 +37,7 @@ class kppParameters:
         self.root = root
         self.path = path
         self.outvar = 'out' # used by Gencase and Writemodule
-        
+
     def read_parms(self):
         ## reads {root}_Parameters.f90 file
         ## stores list containing pairs of indices and MCM molecule names
@@ -78,7 +80,7 @@ class kppParameters:
         setattr(self,attr[0],OrderedDict(pairs))
 
     def read_smiles_table(self,smilesfile,attr='smiles',columns=['compound','SMILES','InChI','molwt']):
-        import pandas as pd        
+        import pandas as pd
         ## smilesfile ('mcm_subset_mass.txt')
         with open(smilesfile) as f:
             ## skip header
@@ -126,31 +128,31 @@ class kppParameters:
             smi = self.smiles[p[1]] if p[1] in self.smiles.keys() else None
             case += indent+'case ({:d}) ! {:s}, {:s}'.format(p[0],p[1],smi)+newline
             # case += format_out(groupfn(smi))+newline
-            case += format_out(groupfn(p[1]))+newline            
+            case += format_out(groupfn(p[1]))+newline
         case += indent+'case default'+newline
         case += format_out([0]*31)
         self.select_case = case
-        
+
     def write_module(self,path=None):
         ## writes a f90 module file with _SIMPOLGroups.f90 extension
         if not path: # debug
             path = self.path
         filename = os.path.join(path,self.root+'_SIMPOLGroups.f90')
         module_template = '''module {ROOT}_SIMPOLGroups
-        
+
   integer, parameter :: ngroups = 31
 
 contains
 
   function substruct_count(index) result({OUT})
-  
+
     integer, intent(in) :: index
     integer, dimension(ngroups) :: {OUT}
-    
+
     assignvector: select case (index)
 {CASE_STATEMENT}
     end select assignvector
-    
+
   end function substruct_count
 
 end module {ROOT}_SIMPOLGroups
@@ -180,7 +182,7 @@ if __name__=='__main__':
     args = parser.parse_args()
     root = args.root
     ## root, smilesfile = ('octane_gen','mcm_subset_mass.txt')
-    parms = kppParameters(root)    
+    parms = kppParameters(root)
     parms.read_parms()
     parms.read_smiles(args.SMILESfile)
     # parms.smiles = OrderedDict(smarts.table['SMILES'])

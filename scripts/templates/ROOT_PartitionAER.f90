@@ -23,7 +23,7 @@ contains
     use {ROOT}_Global, only: CGAS => C
     use {ROOT}_GlobalAER, only: CAER, &
          calc_organic_aerosol_mass, print_organic_aerosol_mass, &
-         CAER_total_microg_m3, CAER0_total_microg_m3, &
+         CAER_total_microg_m3, CAER0_total_microg_m3, dp_from_mass, &
          absorptivep, epsilon, &
          partitioning_mode, absorptive_mode, minconc
 
@@ -36,6 +36,7 @@ contains
 !!$    call print_organic_aerosol_mass()
     CAER_total_microg_m3 = calc_organic_aerosol_mass(CAER)
     write(*,*) 'sum organic CAER [microg/m3]: ', CAER_total_microg_m3
+    write(*,*) 'Dp [m]: ', dp_from_mass(CAER_total_microg_m3)
 
     if ((.not. absorptivep)) then
        if ( ( absorptive_mode .eq. 1 .and. CAER_total_microg_m3 .gt. 0. ) .or. &
@@ -109,6 +110,7 @@ contains
          minconc, molecular_masses, &
          CAER_total_molec_cm3, absorptivep, &
          CAER_ghost_molec_cm3, &
+         calc_prefix, dp_from_mass, Diff_coeff, CAER_total_microg_m3, gammaf, &
          ! DLSODE (values set in _Initialize_AER.f90)
          iopt, istate, itask, itol, liw, lrw, mf, neq, ml, mu, &
          atol, rtol, rwork, y, iwork
@@ -138,6 +140,10 @@ contains
     ! calculate total aerosol in molecules/cm^3
     CAER_total_molec_cm3 = CAER_ghost_molec_cm3 ! for integrator
     do i=1,NorganicSPEC
+       !
+       iOrg = organic_selection_indices(i)       
+       gammaf(i) = calc_prefix(dp_from_mass(CAER_total_microg_m3),Diff_coeff(iOrg))
+       !
        iAER = i+NorganicSPEC
        iOrg = organic_selection_indices(i)
        y(i) = CGAS_old(iOrg)

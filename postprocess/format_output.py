@@ -1,5 +1,13 @@
 #!/usr/bin/env python
 
+################################################################################
+##
+## create flat text CSV file from MCM outputs
+## satoshi.takahama@epfl.ch
+## license: GNU Public License v3.0 (LICENSE_GPLv3.txt)
+##
+################################################################################
+
 ###_* import libraries
 import numpy as np
 import pandas as pd

@@ -6,6 +6,8 @@
 ## S. Takahama (satoshi.takahama@epfl.ch)
 ## June 2014
 ##
+## license: GNU Public License v3.0 (LICENSE_GPLv3.txt)
+##
 ################################################################################
 
 import argparse
@@ -19,7 +21,7 @@ template = lambda x: os.path.join(os.path.dirname(__file__),'templates',x)
 class AERModules:
 
     def __init__(self,root):
-        
+
         self.root = root
         self.modules = [
             'GlobalAER',
@@ -27,7 +29,7 @@ class AERModules:
             'UtilAER',
             'PartitionAER'
             ]
-    
+
     def write(self):
         for mod in self.modules:
             with open(template('ROOT_{MODULE}.f90'.format(MODULE=mod))) as finp:

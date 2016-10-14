@@ -13,6 +13,8 @@
 ##
 ## satoshi.takahama@epfl.ch
 ##
+## license: GNU Public License v3.0 (LICENSE_GPLv3.txt)
+##
 ################################################################################
 
 ###_* -------------------- import libraries --------------------
@@ -54,7 +56,7 @@ files = {
         'input_time.txt',
         'input_temp.txt',
         'cgas_init.txt',
-        'molefrac_init.txt'        
+        'molefrac_init.txt'
         ],
     'outputs':[
         'output_CGAS.txt',
@@ -93,8 +95,8 @@ def convert_cgasdef(runpath):
                     else:
                         idx = indices.ix[compound,'index']
                     fout.write('\t'.join([idx, value])+'\n')
-                        
-        
+
+
 runpath = os.path.join(HERE,args['RUNPATH'])
 
 convert_cgasdef(runpath)
@@ -124,9 +126,9 @@ for label,p in paths.items():
                 sys.exit('missing required input file: '+f)
             ln(src,dst)
             linked.append(f)
-    ## 
+    ##
     for f in files['optional']:
-        src, dst = constructfiles(runpath,execpath,f)        
+        src, dst = constructfiles(runpath,execpath,f)
         if os.path.exists(src):
             ln(src,dst)
             linked.append(f)
@@ -145,6 +147,6 @@ for label,p in paths.items():
         if f in files['dat'] and '_irr.dat' not in f:
             # create formatted file
             subprocess.call('format_output.py '+dst, shell=True, env=env)
-    ## clean 
+    ## clean
     for f in linked:
         os.remove(f)

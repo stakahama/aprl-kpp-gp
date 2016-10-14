@@ -13,6 +13,8 @@
 ##
 ## satoshi.takahama@epfl.ch
 ##
+## license: GNU Public License v3.0 (LICENSE_GPLv3.txt)
+##
 ################################################################################
 
 ###_* -------------------- import libraries --------------------
@@ -37,7 +39,8 @@ def ppb2massc(ppb, molwt, temp=298.15, press=1):
 
 ###_* -------------------- read molecular weights --------------------
 
-molwt = pd.read_table('mcm_{ROOT}_mass.txt'.format(**args),
+molwt = pd.read_table(os.path.join(os.path.dirname(args['RUNPATH']),
+                                   'mcm_{ROOT}_mass.txt'.format(**args)),
                       skiprows=18,header=None,skipinitialspace=True,
                       names=['compound','SMILES','InChI','molwt'],
                       index_col='compound').molwt

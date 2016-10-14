@@ -18,6 +18,8 @@
 ##
 ## satoshi.takahama@epfl.ch
 ##
+## license: GNU Public License v3.0 (LICENSE_GPLv3.txt)
+##
 ################################################################################
 
 ###_* -------------------- import libraries --------------------
@@ -70,7 +72,7 @@ if not (args['skipbuild'] or args['onlygas'] or args['onlytotal']):
 ###_* -------------------- build def file -------------------
 
     deffile = '{ROOT}.def'.format(**args)
-    
+
     with open(os.path.join(HERE,deffile),'w') as fout:
         with open(os.path.join(args['MAINPATH'],'scripts','templates','generic.def')) as finp:
             fout.write(finp.read().format(**args))
@@ -95,7 +97,7 @@ if not (args['skipbuild'] or args['onlygas'] or args['onlytotal']):
 
 ###_* -------------------- build kpp (common) --------------------
 
-# print '-------------------- building kpp common --------------------'    
+# print '-------------------- building kpp common --------------------'
     os.chdir(template)
     subprocess.call('cp -pv {MAINPATH}/modules_generic/* .'.format(**args), shell=True)
     subprocess.call('kpp_edit_kpp.py {ROOT}'.format(**args), shell=True, env=env)
