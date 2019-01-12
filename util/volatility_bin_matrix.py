@@ -14,10 +14,17 @@
 
 ###_* -------------------- import libraries --------------------
 
+import os
+import sys
 import numpy as np
 import pandas as pd
 import argparse
 from simpol2 import SimpolClass
+##
+scriptspath = os.path.join(os.path.dirname(__file__), '../scripts')
+sys.path.append(scriptspath)
+from kpp_generate_SIMPOLGroups import kppParameters
+
 
 ###_* -------------------- define functions --------------------
 
@@ -72,15 +79,21 @@ outfile.csv
     simp = SimpolClass()
     simp.read_compounds(args['FRAGTABLE'])
     vp = simp.calc_properties(float(args['TEMP']))['p0']
-    ##
-    molwt = pd.read_table(args['MOLWTFILE'],
-                          skiprows=18,header=None,skipinitialspace=True,
-                          names=['compound','SMILES','InChI','molwt'],
-                          index_col='compound').molwt
+    ## -------
+    # molwt = pd.read_table(args['MOLWTFILE'],
+    #                       skiprows=18,header=None,skipinitialspace=True,
+    #                       names=['compound','SMILES','InChI','molwt'],
+    #                       index_col='compound').molwt
+    # molwt.index = molwt.index.map(str.strip)
+    ## -------
+    kpar = kppParameters(None)
+    kpar.read_smiles_table(args['MOLWTFILE'])
+    molwt = kpar.smiles['molwt'].astype('float')
     molwt.index = molwt.index.map(str.strip)
+    ## -------
 
     ## calc
-    c0 = ppb2massc(atm2ppb(vp),molwt,float(args['TEMP']))
+    c0 = ppb2massc(atm2ppb(vp), molwt, float(args['TEMP']))
     binmatrix = create_binmatrix(c0)
 
     ## export
